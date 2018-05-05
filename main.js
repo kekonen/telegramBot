@@ -6,8 +6,7 @@ var fs = require('fs');
 //     const token = contents;
 // });
 const token = fs.readFileSync('telegram.key', 'utf8').trim();
-//'595662741:AAH1tAgnSmaijP5WCRfZOw2MldF8ZNrXQL4';
-console.log(token)
+console.log('Token: ', token)
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});

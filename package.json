@@ -1,0 +1,28 @@
+{
+  "name": "telegrambot",
+  "version": "1.0.0",
+  "description": "My bot",
+  "main": "main.js",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.30.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kekonen/telegramBot.git"
+  },
+  "keywords": [
+    "bot",
+    "js"
+  ],
+  "author": "Daniil Naumetc",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kekonen/telegramBot/issues"
+  },
+  "homepage": "https://github.com/kekonen/telegramBot#readme"
+}
