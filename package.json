@@ -4,6 +4,7 @@
   "description": "My bot",
   "main": "main.js",
   "dependencies": {
+    "node-emoji": "^1.8.1",
     "node-telegram-bot-api": "^0.30.0"
   },
   "devDependencies": {},
