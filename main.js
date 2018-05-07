@@ -3,6 +3,7 @@ const fs = require('fs');
 const Audio = require('./audio');
 var emoji = require('node-emoji');
 
+
 // replace the value below with the Telegram token you receive from @BotFather
 // fs.readFile('DATA', 'utf8', function(err, contents) {
 //     const token = contents;
