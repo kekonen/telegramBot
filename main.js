@@ -21,7 +21,8 @@ console.log(emojiDb);
 audioDb['hitman'] = new Audio('1.mp3', 'hitman', 'knife')
 audioDb['scarface'] = new Audio('2.mp3', 'scarface', 'sunglasses')
 
-//emojiDb['knife'] = 
+emojiDb['knife'] = audioDb['hitman'];
+emojiDb['sunglasses'] = audioDb['scarface'];
 
 
 // Matches "/echo [whatever]"
