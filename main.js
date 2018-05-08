@@ -204,8 +204,10 @@ class T {
       this.bot.sendMessage(chatId, 'Напоминание получено');
     });
     
-    this.bot.on(/\/меню/, (msg) => {
-    
+    this.bot.on('inline_query', (inline_query) => {
+      const {id:queryId, from, query:queryText} = inline_query.;
+
+      //this.bot.answerInlineQuery(queryId,[])
     })
   }
 }
