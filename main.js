@@ -205,9 +205,9 @@ class T {
     });
     
     this.bot.on('inline_query', (inline_query) => {
-      const {id:queryId, from, query:queryText} = inline_query.;
+      const {id:queryId, from, query:queryText} = inline_query;
 
-      //this.bot.answerInlineQuery(queryId,[])
+      this.bot.answerInlineQuery(queryId,[])
     })
   }
 }
