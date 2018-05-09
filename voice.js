@@ -1,4 +1,4 @@
-class Audio {
+class Voice {
 	constructor(path, name, emojiCode) {
 		this.path = path; 
 		this.name = name;
@@ -10,4 +10,4 @@ class Audio {
 	}
 }
 
-module.exports = Audio;
+module.exports = Voice;

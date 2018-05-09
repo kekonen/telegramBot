@@ -1,7 +1,12 @@
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
-const Audio = require('./audio');
+const Voice = require('./audio');
 var emoji = require('node-emoji');
+
+var express = require('express');
+
+
+
 
 
 // replace the value below with the Telegram token you receive from @BotFather
@@ -18,15 +23,28 @@ class T {
     // Create a bot that uses 'polling' to fetch new updates
     this.bot = new TelegramBot(this.token, {polling: true});
 
-    this.audioDb = {};
+    this.voiceDb = {};
     this.emojiDb = Object.assign({}, ...JSON.parse(fs.readFileSync('emojiDbEmpty.json', 'utf8')).map(emoji => {var plh={};plh[emoji]=[];return plh}));
     //console.log(this.emojiDb);
     
-    this.audioDb['hitman'] = new Audio('1.mp3', 'hitman', 'knife');
-    this.audioDb['scarface'] = new Audio('2.mp3', 'scarface', 'sunglasses');
+    this.voiceDb['hitman'] = new Voice('1.opus', 'hitman', 'knife');
+    this.voiceDb['scarface'] = new Voice('2.opus', 'scarface', 'sunglasses');
 
-    this.emojiDb['knife'] = this.audioDb['hitman'];
-    this.emojiDb['sunglasses'] = this.audioDb['scarface'];
+    this.emojiDb['knife'] = this.voiceDb['hitman'];
+    this.emojiDb['sunglasses'] = this.voiceDb['scarface'];
+
+
+    var app = express();
+
+    app.get('/', function (req, res) {
+      res.send('Hello World!');
+    });
+
+    app.use('/voice', express.static('voice'))
+
+    app.listen(80, function () {
+      console.log('Example app listening on port 80!');
+    });
 
   }
 
@@ -206,8 +224,19 @@ class T {
     
     this.bot.on('inline_query', (inline_query) => {
       const {id:queryId, from, query:queryText} = inline_query;
+      const results = [];
+      //ffmpeg -i input.mp3 -c:a libopus output.opus
+      var hitman = this.voiceDb['hitman']
+      var [mask, domain, path] = [this.mask, this.domain, hitman.path]
+      resutls.push({
+        type:'voice',
+        id:'1',
+        voice_url:`${mask}://${domain}/voice/${path}`,
+        title: hitman.name,
+        caption: hitman.emojiCode
+      })
 
-      this.bot.answerInlineQuery(queryId,[])
+      this.bot.answerInlineQuery(queryId,resutls)
     })
   }
 }
