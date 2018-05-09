@@ -35,15 +35,17 @@ class T {
 
 
     var app = express();
-
+    this.port = 8077;
+    this.mask = 'http';
+    this.domain = 'localhost'
     app.get('/', function (req, res) {
       res.send('Hello World!');
     });
 
     app.use('/voice', express.static('voice'))
-
-    app.listen(80, function () {
-      console.log('Example app listening on port 80!');
+    console.log(this.port)
+    app.listen(this.port, function () {
+      console.log(`Example app listening on port ${this.port}!`);
     });
 
   }
