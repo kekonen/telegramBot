@@ -1,6 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
-const Voice = require('./audio');
+const Voice = require('./voice');
 var emoji = require('node-emoji');
 
 var express = require('express');
