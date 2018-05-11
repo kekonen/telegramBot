@@ -27,8 +27,8 @@ class T {
     this.emojiDb = Object.assign({}, ...JSON.parse(fs.readFileSync('emojiDbEmpty.json', 'utf8')).map(emoji => {var plh={};plh[emoji]=[];return plh}));
     //console.log(this.emojiDb);
     
-    this.voiceDb['hitman'] = new Voice('1.opus', 'hitman', 'knife');
-    this.voiceDb['scarface'] = new Voice('2.opus', 'scarface', 'sunglasses');
+    this.voiceDb['hitman'] = new Voice('audios/1.opus', 'hitman', 'knife');
+    this.voiceDb['scarface'] = new Voice('audios/2.opus', 'scarface', 'sunglasses');
 
     this.emojiDb['knife'] = this.voiceDb['hitman'];
     this.emojiDb['sunglasses'] = this.voiceDb['scarface'];
@@ -72,13 +72,15 @@ class T {
     
       const chatId = msg.chat.id;
       const resp = match[1]; // the captured "whatever"
+      var voice = this.voiceDb[resp];
     
       //console.log(`message: ${resp}, ${emoji.which(resp)}`);
     
       // send back the matched "whatever" to the chat
-      this.bot.sendVoice(chatId, 'audios/' + resp)
+      this.bot.sendVoice(chatId, voice.path)
       .then(answer => {
-        console.log(answer);
+        var fileId = answer.voice.file_id;
+        voice.setFileId(fileId);
       });
     });
     
@@ -245,14 +247,14 @@ class T {
       const {id:queryId, from, query:queryText} = inline_query;
       const results = [];
       //ffmpeg -i input.mp3 -c:a libopus output.opus
-      var hitman = this.voiceDb['hitman']
-      var [mask, domain, path, port] = [this.mask, this.domain, hitman.path, this.port]
+      var voice = this.voiceDb[queryText]
+      var [mask, domain, path, port] = [this.mask, this.domain, voice.path, this.port]
       results.push({
         type:'voice',
         id:'1',
-        voice_file_id:`${mask}://${domain}/voice/${path}`,
-        title: hitman.name,
-        caption: hitman.emojiCode
+        voice_file_id: voice.fileId,
+        title: voice.name,
+        caption: voice.emojiCode
       })
       console.log('Inline results: ', results)
 
