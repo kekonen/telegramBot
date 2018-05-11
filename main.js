@@ -254,7 +254,7 @@ class T {
         id:'1',
         voice_file_id: voice.fileId,
         title: voice.name,
-        caption: voice.emojiCode
+        caption: emoji.get(voice.emojiCode)
       })
       console.log('Inline results: ', results)
 
