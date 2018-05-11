@@ -44,7 +44,7 @@ class T {
 
     app.use('/voice', express.static('voice'))
     console.log(this.port)
-    app.listen(this.port, function () {
+    app.listen(this.port, () => {
       console.log(`Example app listening on port ${this.port}!`);
     });
 
@@ -229,11 +229,11 @@ class T {
       const results = [];
       //ffmpeg -i input.mp3 -c:a libopus output.opus
       var hitman = this.voiceDb['hitman']
-      var [mask, domain, path] = [this.mask, this.domain, hitman.path]
+      var [mask, domain, path, port] = [this.mask, this.domain, hitman.path, this.port]
       resutls.push({
         type:'voice',
         id:'1',
-        voice_url:`${mask}://${domain}/voice/${path}`,
+        voice_url:`${mask}://${domain}:${port}/voice/${path}`,
         title: hitman.name,
         caption: hitman.emojiCode
       })
