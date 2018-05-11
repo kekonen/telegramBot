@@ -42,7 +42,7 @@ class T {
       res.send('Hello World!');
     });
 
-    app.use('/voice', express.static('voice'))
+    app.use('/voice', express.static('audios'))
     console.log(this.port)
     app.listen(this.port, () => {
       console.log(`Example app listening on port ${this.port}!`);
