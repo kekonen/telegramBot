@@ -11,7 +11,7 @@ class Voice {
 	}
 
 	getVoiceData(){
-		return {type: 'voice', this.path, this.name, this.emojiCode, this.fileId};
+		return {type: 'voice', path:this.path, name:this.name, emojiCode:this.emojiCode, fileId:this.fileId};
 	}
 }
 

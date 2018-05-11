@@ -3,6 +3,7 @@ const fs = require('fs');
 const Voice = require('./voice');
 var emoji = require('node-emoji');
 var Datastore = require('nedb');
+var CallbackRouter = require('./callbackRouter')
 
 // var express = require('express');
 // replace the value below with the Telegram token you receive from @BotFather
@@ -14,17 +15,19 @@ var Datastore = require('nedb');
 class T {
   constructor(){
     this.token = fs.readFileSync('telegram.key', 'utf8').trim();
-    this.serviceChatId = 0;
+    this.serviceChatId = 218135295;
     console.log('Token: ', this.token)
 
     // Create a bot that uses 'polling' to fetch new updates
     this.bot = new TelegramBot(this.token, {polling: true});
+    this.prop= 'kek';
 
     this.emojiDb = Object.assign({}, ...JSON.parse(fs.readFileSync('emojiDbEmpty.json', 'utf8')).map(emoji => {var plh={};plh[emoji]=[];return plh}));
     this.voiceDb = {};
 
     this.db = new Datastore({filename : 'files.db'});
-    db.loadDatabase();
+    this.db.loadDatabase();
+    this.cbr = new CallbackRouter(this);
 
     this.db.find({type: 'voice'}, (err, voices) => {
       voices.forEach(voice => {
@@ -32,22 +35,27 @@ class T {
       });
     })
     
-
+    this.cbr.registerFunction('requestMp3File', (chatId, audio) => {
+      console.log('kek->',chatId, audio)
+      this.bot.sendMessage(chatId, this.prop);
+    })
     
     
     //console.log(this.emojiDb);
     
-    this.voiceDb['hitman'] = new Voice('audios/1.opus', 'hitman', 'knife');
-    this.voiceDb['scarface'] = new Voice('audios/2.opus', 'scarface', 'sunglasses');
+    // this.voiceDb['hitman'] = new Voice('audios/1.opus', 'hitman', 'knife');
+    // this.voiceDb['scarface'] = new Voice('audios/2.opus', 'scarface', 'sunglasses');
 
-    this.emojiDb['knife'] = this.voiceDb['hitman'];
-    this.emojiDb['sunglasses'] = this.voiceDb['scarface'];
+    // this.emojiDb['knife'] = this.voiceDb['hitman'];
+    // this.emojiDb['sunglasses'] = this.voiceDb['scarface'];
 
+    this.createVoice('audios/1.opus', 'hitman', 'knife');
+    this.createVoice('audios/2.opus', 'scarface', 'sunglasses');
 
     // var app = express();
-    this.port = 8077;
-    this.mask = 'http';
-    this.domain = 'localhost'
+    // this.port = 8077;
+    // this.mask = 'http';
+    // this.domain = 'localhost'
     // app.get('/', function (req, res) {
     //   res.send('Hello World!');
     // });
@@ -61,17 +69,29 @@ class T {
   }
 
   createVoice(path, name, emojiCode){
-    var voice = new Voice(path, name, emojiCode);
+    console.log('Creating voice')
+    this.db.find({path, name, emojiCode}, (err, foundVoices) => {
+      console.log(foundVoices)
+      if (!foundVoices.length) {
+        console.log(` - Voice Not Found, creating -> name:${name}, path:${path}, emoji:${emoji.get(emojiCode)}`)
+        var voice = new Voice(path, name, emojiCode);
 
-    this.bot.sendVoice(this.serviceChatId, voice.path)
-      .then(answer => {
-        var fileId = answer.voice.file_id;
-        voice.setFileId(fileId);
-      });
-      
-    this.voiceDb[name] = voice;
-    this.emojiDb[emojiCode] = voice;
-    this.db.insert(voice.getVoiceData())
+        this.bot.sendVoice(this.serviceChatId, voice.path)
+          .then(answer => {
+            var fileId = answer.voice.file_id;
+            voice.setFileId(fileId);
+            this.voiceDb[name] = voice;
+            this.emojiDb[emojiCode] = voice;
+            console.log('voice data ------>',voice.getVoiceData())
+            this.db.insert(voice.getVoiceData())
+          });
+          
+        
+      }
+      else {
+        console.log(` - Voice Found, skipping name:${name}, path:${path}, emoji:${emoji.get(emojiCode)}`)
+      }
+    })
   }
 
   register(){
@@ -86,7 +106,7 @@ class T {
       console.log(`message: ${resp}, ${emoji.which(resp)}`);
     
       // send back the matched "whatever" to the chat
-      this.bot.sendMessage(chatId, resp);
+      this.bot.sendMessage(chatId, chatId+' -> '+resp);
     });
 
     this.bot.onText(/\/sendVoice (.+)/, (msg, match) => {
@@ -108,8 +128,31 @@ class T {
       });
     });
 
+    this.bot.onText(/\/registerVoice (.+)/, (msg, match) => {
+      // 'msg' is the received Message from Telegram
+      // 'match' is the result of executing the regexp above on the text content
+      // of the message
+      console.log('kek')
+      const chatId = msg.chat.id;
+      const name = match[1]; // the captured "whatever"
+      const emojiId = match[2];
+      console.log('msg: ', name, emojiId)
+
+      this.cbr.subscribe(chatId,'requestMp3File')
+      this.bot.sendMessage(chatId, 'Thank you, please send your mp3 file...');
+
+      // this.bot.sendVoice(chatId, voice.path)
+      // .then(answer => {
+      //   var fileId = answer.voice.file_id;
+      //   voice.setFileId(fileId);
+      // });
+    });
+
     this.bot.on('audio', audio => {
-      console.log('audio', audio);
+      console.log('start on audio')
+      if (!this.cbr.execute(audio.chat.id, audio)) {
+        console.log('audio', audio);
+      }
     })
     
     this.bot.onText(/\/напомни (.+)/, (msg, match) => {
@@ -271,6 +314,9 @@ class T {
       this.bot.sendMessage(chatId, 'Напоминание получено');
     });
     
+
+    // To do:
+    // Add /mine/
     this.bot.on('inline_query', (inline_query) => {
       const {id:queryId, from, query:queryText} = inline_query;
       const results = [];
