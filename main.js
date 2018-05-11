@@ -35,9 +35,9 @@ class T {
 
 
     var app = express();
-    this.port = 80;
+    this.port = 8077;
     this.mask = 'http';
-    this.domain = '206.189.8.112'
+    this.domain = 'localhost'
     app.get('/', function (req, res) {
       res.send('Hello World!');
     });
