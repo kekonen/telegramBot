@@ -24,13 +24,12 @@ class CallbackRouter {
         console.log('2',functionName)
         if (!functionName) return 0
         console.log('3')
-        this.callbackFunctions[functionName](chatId, data)
+        return this.callbackFunctions[functionName](chatId, data)
         console.log('4')
     }
 
     registerFunction(functionName, func){
-        this.callbackFunctions[functionName] = func.bind(this);
-        
+        this.callbackFunctions[functionName] = func.bind(this); //if want to work with inside of router use anonimous function definition, otherwise arrow
     }
 }
 

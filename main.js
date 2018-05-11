@@ -3,7 +3,11 @@ const fs = require('fs');
 const Voice = require('./voice');
 var emoji = require('node-emoji');
 var Datastore = require('nedb');
-var CallbackRouter = require('./callbackRouter')
+var CallbackRouter = require('./callbackRouter');
+var rp = require('request-promise');
+
+var ffmpeg = require('fluent-ffmpeg');
+//var command = ffmpeg();
 
 // var express = require('express');
 // replace the value below with the Telegram token you receive from @BotFather
@@ -36,8 +40,23 @@ class T {
     })
     
     this.cbr.registerFunction('requestMp3File', (chatId, audio) => {
-      console.log('kek->',chatId, audio)
-      this.bot.sendMessage(chatId, this.prop);
+      // console.log('kek->',chatId, audio)
+      return this.bot.getFile(audio.audio.file_id).then(fileInfo => {
+        console.log('fileUrl--->', fileInfo);
+        var fileLink = `https://api.telegram.org/file/bot${this.token}/${fileInfo.file_path}`;
+        return rp.get({uri:fileLink, encoding: 'binary'})
+        .then(body => {
+          let writeStream = fs.createWriteStream(`audios/${chatId}_${audio.audio.file_id}.mp3`);
+          writeStream.write(body, 'binary');
+          writeStream.on('finish', () => {
+            console.log('wrote all data to file');
+            var command = ffmpeg(`audios/${chatId}_${audio.audio.file_id}.mp3`).audioCodec('libopus').output('audios/lol.opus')
+            .on('end', function(){console.log()}).run();
+          });
+          writeStream.end();
+        })
+      })
+      return this.bot.sendMessage(chatId, this.prop);
     })
     
     
@@ -126,6 +145,18 @@ class T {
         var fileId = answer.voice.file_id;
         voice.setFileId(fileId);
       });
+      // const chatId = msg.chat.id;
+      // const resp = match[1]; // the captured "whatever"
+      // var voice = this.voiceDb[resp];
+    
+      // //console.log(`message: ${resp}, ${emoji.which(resp)}`);
+    
+      // // send back the matched "whatever" to the chat
+      // this.bot.sendVoice(chatId, voice.path)
+      // .then(answer => {
+      //   var fileId = answer.voice.file_id;
+      //   voice.setFileId(fileId);
+      // });
     });
 
     this.bot.onText(/\/registerVoice (.+)/, (msg, match) => {
@@ -151,7 +182,7 @@ class T {
     this.bot.on('audio', audio => {
       console.log('start on audio')
       if (!this.cbr.execute(audio.chat.id, audio)) {
-        console.log('audio', audio);
+        console.log('audio-->', audio);
       }
     })
     

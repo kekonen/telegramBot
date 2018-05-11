@@ -5,9 +5,12 @@
   "main": "main.js",
   "dependencies": {
     "express": "^4.16.3",
+    "fluent-ffmpeg": "^2.1.2",
     "nedb": "^1.8.0",
     "node-emoji": "^1.8.1",
-    "node-telegram-bot-api": "^0.30.0"
+    "node-telegram-bot-api": "^0.30.0",
+    "request": "^2.85.0",
+    "request-promise": "^4.2.2"
   },
   "devDependencies": {},
   "scripts": {
