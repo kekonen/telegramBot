@@ -233,7 +233,7 @@ class T {
       results.push({
         type:'voice',
         id:'1',
-        voice_url:`${mask}://${domain}:${port}/voice/${path}`,
+        voice_url:`${mask}://${domain}/voice/${path}`,
         title: hitman.name,
         caption: hitman.emojiCode
       })
