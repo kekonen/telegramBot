@@ -6,25 +6,25 @@ class CallbackRouter {
         this.bot = main.bot;
     }
 
-    subscribe(chatId, functionName) {
+    subscribe(chatId, functionName, context) {
         console.log('starting subsription')
         if (!this.callbackDb[chatId]) {
             console.log('subsriptions didnt exist')
-            this.callbackDb[chatId] = [functionName];
+            this.callbackDb[chatId] = [[functionName, context]];
         } else {
             console.log('subsriptions existed')
-            this.callbackDb[chatId].push(functionName);
+            this.callbackDb[chatId].push([functionName, context]);
         }
         console.log('subsriptions created')        
     }
 
     execute(chatId, data) {
-        console.log('1',chatId,data)
-        var functionName = this.callbackDb[chatId].pop();
-        console.log('2',functionName)
+        console.log('1',chatId,data,this.callbackDb[chatId])
+        var [functionName,context] = this.callbackDb[chatId].pop();
+        console.log('2',functionName,context)
         if (!functionName) return 0
         console.log('3')
-        return this.callbackFunctions[functionName](chatId, data)
+        return this.callbackFunctions[functionName](chatId, context, data)
         console.log('4')
     }
 

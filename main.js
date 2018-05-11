@@ -39,8 +39,8 @@ class T {
       });
     })
     
-    this.cbr.registerFunction('requestMp3File', (chatId, audio) => {
-      // console.log('kek->',chatId, audio)
+    this.cbr.registerFunction('registerMp3File', (chatId, context, audio) => {
+      console.log('lol->',chatId,context)
       return this.bot.getFile(audio.audio.file_id).then(fileInfo => {
         console.log('fileUrl--->', fileInfo);
         var fileLink = `https://api.telegram.org/file/bot${this.token}/${fileInfo.file_path}`;
@@ -50,8 +50,11 @@ class T {
           writeStream.write(body, 'binary');
           writeStream.on('finish', () => {
             console.log('wrote all data to file');
-            var command = ffmpeg(`audios/${chatId}_${audio.audio.file_id}.mp3`).audioCodec('libopus').output('audios/lol.opus')
-            .on('end', function(){console.log()}).run();
+            var command = ffmpeg(`audios/${chatId}_${audio.audio.file_id}.mp3`).audioCodec('libopus').output(`audios/${audio.audio.file_id}.opus`)
+            .on('end', () => {
+              console.log('context',context)
+              this.createVoice(`audios/${audio.audio.file_id}.opus`, context.name, context.emojiId);
+            } ).run();
           });
           writeStream.end();
         })
@@ -68,8 +71,8 @@ class T {
     // this.emojiDb['knife'] = this.voiceDb['hitman'];
     // this.emojiDb['sunglasses'] = this.voiceDb['scarface'];
 
-    this.createVoice('audios/1.opus', 'hitman', 'knife');
-    this.createVoice('audios/2.opus', 'scarface', 'sunglasses');
+    // ---------------------------   this.createVoice('audios/1.opus', 'hitman', 'knife');
+    // ---------------------------   this.createVoice('audios/2.opus', 'scarface', 'sunglasses');
 
     // var app = express();
     // this.port = 8077;
@@ -140,11 +143,12 @@ class T {
       //console.log(`message: ${resp}, ${emoji.which(resp)}`);
     
       // send back the matched "whatever" to the chat
-      this.bot.sendVoice(chatId, voice.path)
-      .then(answer => {
-        var fileId = answer.voice.file_id;
-        voice.setFileId(fileId);
-      });
+      console.log('SendVoice--->', chatId, voice.path, voice.emojiCode,voice.fileId)
+      this.bot.sendVoice(chatId, voice.fileId?voice.fileId:voice.path, {caption: voice.emojiCode})
+      // .then(answer => {
+      //   var fileId = answer.voice.file_id;
+      //   voice.setFileId(fileId);
+      // });
       // const chatId = msg.chat.id;
       // const resp = match[1]; // the captured "whatever"
       // var voice = this.voiceDb[resp];
@@ -159,7 +163,7 @@ class T {
       // });
     });
 
-    this.bot.onText(/\/registerVoice (.+)/, (msg, match) => {
+    this.bot.onText(/\/registerVoice (.+) (.+)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
       // 'match' is the result of executing the regexp above on the text content
       // of the message
@@ -167,10 +171,13 @@ class T {
       const chatId = msg.chat.id;
       const name = match[1]; // the captured "whatever"
       const emojiId = match[2];
-      console.log('msg: ', name, emojiId)
+      //for (let i=0;i<emojiId.length;i++) console.log(emojiId,emojiId[i]);
+      console.log('msg: ',emojiId)
+      
 
-      this.cbr.subscribe(chatId,'requestMp3File')
-      this.bot.sendMessage(chatId, 'Thank you, please send your mp3 file...');
+      this.cbr.subscribe(chatId,'registerMp3File',{name, emojiId})
+      this.bot.sendMessage(chatId, `Thank you, please send your mp3 file...${emojiId}`);
+      //for (let i=0;i<emojiId.length;i++) console.log(emojiId,emojiId[i]);
 
       // this.bot.sendVoice(chatId, voice.path)
       // .then(answer => {
@@ -359,7 +366,7 @@ class T {
         id:'1',
         voice_file_id: voice.fileId,
         title: voice.name,
-        caption: emoji.get(voice.emojiCode)
+        caption: emoji.unemojify(voice.emojiCode)
       })
       console.log('Inline results: ', results)
 
