@@ -35,9 +35,9 @@ class T {
 
 
     var app = express();
-    this.port = 8077;
+    this.port = 80;
     this.mask = 'http';
-    this.domain = 'localhost'
+    this.domain = '206.189.8.112'
     app.get('/', function (req, res) {
       res.send('Hello World!');
     });
@@ -63,6 +63,20 @@ class T {
     
       // send back the matched "whatever" to the chat
       this.bot.sendMessage(chatId, resp);
+    });
+
+    this.bot.onText(/\/sendVoice (.+)/, (msg, match) => {
+      // 'msg' is the received Message from Telegram
+      // 'match' is the result of executing the regexp above on the text content
+      // of the message
+    
+      const chatId = msg.chat.id;
+      const resp = match[1]; // the captured "whatever"
+    
+      //console.log(`message: ${resp}, ${emoji.which(resp)}`);
+    
+      // send back the matched "whatever" to the chat
+      this.bot.sendVoice(chatId, 'audios/' + resp);
     });
     
     this.bot.onText(/\/напомни (.+)/, (msg, match) => {
