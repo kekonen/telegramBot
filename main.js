@@ -76,7 +76,10 @@ class T {
       //console.log(`message: ${resp}, ${emoji.which(resp)}`);
     
       // send back the matched "whatever" to the chat
-      this.bot.sendVoice(chatId, 'audios/' + resp);
+      this.bot.sendVoice(chatId, 'audios/' + resp)
+      .then(answer => {
+        console.log(answer);
+      });
     });
     
     this.bot.onText(/\/напомни (.+)/, (msg, match) => {
@@ -247,7 +250,7 @@ class T {
       results.push({
         type:'voice',
         id:'1',
-        voice_url:`${mask}://${domain}/voice/${path}`,
+        voice_file_id:`${mask}://${domain}/voice/${path}`,
         title: hitman.name,
         caption: hitman.emojiCode
       })
