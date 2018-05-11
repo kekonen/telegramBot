@@ -230,15 +230,16 @@ class T {
       //ffmpeg -i input.mp3 -c:a libopus output.opus
       var hitman = this.voiceDb['hitman']
       var [mask, domain, path, port] = [this.mask, this.domain, hitman.path, this.port]
-      resutls.push({
+      results.push({
         type:'voice',
         id:'1',
         voice_url:`${mask}://${domain}:${port}/voice/${path}`,
         title: hitman.name,
         caption: hitman.emojiCode
       })
+      console.log('Inline results: ', results)
 
-      this.bot.answerInlineQuery(queryId,resutls)
+      this.bot.answerInlineQuery(queryId,results)
     })
   }
 }
