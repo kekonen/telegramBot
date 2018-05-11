@@ -2,13 +2,9 @@ const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const Voice = require('./voice');
 var emoji = require('node-emoji');
+var Datastore = require('nedb');
 
-var express = require('express');
-
-
-
-
-
+// var express = require('express');
 // replace the value below with the Telegram token you receive from @BotFather
 // fs.readFile('DATA', 'utf8', function(err, contents) {
 //     const token = contents;
@@ -18,13 +14,27 @@ var express = require('express');
 class T {
   constructor(){
     this.token = fs.readFileSync('telegram.key', 'utf8').trim();
+    this.serviceChatId = 0;
     console.log('Token: ', this.token)
 
     // Create a bot that uses 'polling' to fetch new updates
     this.bot = new TelegramBot(this.token, {polling: true});
 
-    this.voiceDb = {};
     this.emojiDb = Object.assign({}, ...JSON.parse(fs.readFileSync('emojiDbEmpty.json', 'utf8')).map(emoji => {var plh={};plh[emoji]=[];return plh}));
+    this.voiceDb = {};
+
+    this.db = new Datastore({filename : 'files.db'});
+    db.loadDatabase();
+
+    this.db.find({type: 'voice'}, (err, voices) => {
+      voices.forEach(voice => {
+        this.voiceDb[voice.name] = new Voice(voice.path, voice.name, voice.emojiCode, voice.fileId)
+      });
+    })
+    
+
+    
+    
     //console.log(this.emojiDb);
     
     this.voiceDb['hitman'] = new Voice('audios/1.opus', 'hitman', 'knife');
@@ -34,20 +44,34 @@ class T {
     this.emojiDb['sunglasses'] = this.voiceDb['scarface'];
 
 
-    var app = express();
+    // var app = express();
     this.port = 8077;
     this.mask = 'http';
     this.domain = 'localhost'
-    app.get('/', function (req, res) {
-      res.send('Hello World!');
-    });
+    // app.get('/', function (req, res) {
+    //   res.send('Hello World!');
+    // });
 
-    app.use('/voice', express.static('audios'))
-    console.log(this.port)
-    app.listen(this.port, () => {
-      console.log(`Example app listening on port ${this.port}!`);
-    });
+    // app.use('/voice', express.static('audios'))
+    // console.log(this.port)
+    // app.listen(this.port, () => {
+    //   console.log(`Example app listening on port ${this.port}!`);
+    // });
 
+  }
+
+  createVoice(path, name, emojiCode){
+    var voice = new Voice(path, name, emojiCode);
+
+    this.bot.sendVoice(this.serviceChatId, voice.path)
+      .then(answer => {
+        var fileId = answer.voice.file_id;
+        voice.setFileId(fileId);
+      });
+      
+    this.voiceDb[name] = voice;
+    this.emojiDb[emojiCode] = voice;
+    this.db.insert(voice.getVoiceData())
   }
 
   register(){
@@ -83,6 +107,10 @@ class T {
         voice.setFileId(fileId);
       });
     });
+
+    this.bot.on('audio', audio => {
+      console.log('audio', audio);
+    })
     
     this.bot.onText(/\/напомни (.+)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
