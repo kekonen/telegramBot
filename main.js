@@ -29,11 +29,15 @@ class T {
     this.emojiDb = Object.assign({}, ...JSON.parse(fs.readFileSync('emojiDbEmpty.json', 'utf8')).map(emoji => {var plh={};plh[emoji]=[];return plh}));
     this.voiceDb = {};
 
-    this.db = new Datastore({filename : 'files.db'});
-    this.db.loadDatabase();
+    this.filesDb = new Datastore({filename : 'files.db'});
+    this.filesDb.loadDatabase();
+
+    this.usersDb = new Datastore({filename : 'users.db'});
+    this.usersDb.loadDatabase();
+
     this.cbr = new CallbackRouter(this);
 
-    this.db.find({type: 'voice'}, (err, voices) => {
+    this.filesDb.find({type: 'voice'}, (err, voices) => {
       voices.forEach(voice => {
         this.voiceDb[voice.name] = new Voice(voice.path, voice.name, voice.emojiCode, voice.fileId)
       });
@@ -50,10 +54,12 @@ class T {
           writeStream.write(body, 'binary');
           writeStream.on('finish', () => {
             console.log('wrote all data to file');
+            //ffmpeg -i input.mp3 -c:a libopus output.opus
             var command = ffmpeg(`audios/${chatId}_${audio.audio.file_id}.mp3`).audioCodec('libopus').output(`audios/${audio.audio.file_id}.opus`)
             .on('end', () => {
               console.log('context',context)
               this.createVoice(`audios/${audio.audio.file_id}.opus`, context.name, context.emojiId);
+              this.usersDb.insert({chatId, userVoices: [audio.audio.file_id]});
             } ).run();
           });
           writeStream.end();
@@ -92,7 +98,7 @@ class T {
 
   createVoice(path, name, emojiCode){
     console.log('Creating voice')
-    this.db.find({path, name, emojiCode}, (err, foundVoices) => {
+    this.filesDb.find({path, name, emojiCode}, (err, foundVoices) => {
       console.log(foundVoices)
       if (!foundVoices.length) {
         console.log(` - Voice Not Found, creating -> name:${name}, path:${path}, emoji:${emoji.get(emojiCode)}`)
@@ -105,7 +111,7 @@ class T {
             this.voiceDb[name] = voice;
             this.emojiDb[emojiCode] = voice;
             console.log('voice data ------>',voice.getVoiceData())
-            this.db.insert(voice.getVoiceData())
+            this.filesDb.insert(voice.getVoiceData())
           });
           
         
@@ -191,165 +197,6 @@ class T {
       if (!this.cbr.execute(audio.chat.id, audio)) {
         console.log('audio-->', audio);
       }
-    })
-    
-    this.bot.onText(/\/напомни (.+)/, (msg, match) => {
-      // 'msg' is the received Message from Telegram
-      // 'match' is the result of executing the regexp above on the text content
-      // of the message
-    
-      const chatId = msg.chat.id;
-      const what = match[1];
-    
-      const napomnyV = (result, chatId, bot) => {
-        const day = result[2];
-        const chto = result[3];
-        const when = result[4].match(/(\d+).(\d+)/);
-        const whenHours = when[1];
-        const whenMinutes = when[2];
-    
-        whenMapping={
-          'понедельник':1,
-          'вторник':2,
-          'среду':3,
-          'четверг':4,
-          'пятницу':5,
-          'субботу':6,
-          'воскресенье':0,
-        }
-    
-        var then = new Date();
-    
-        var days = whenMapping[day] - then.getDay();
-    
-        if (days<=0) days += 7; 
-        then.setDate(then.getDate()+days);
-        then.setHours(whenHours, whenMinutes);
-    
-    
-        setTimeout(()=> {bot.sendMessage(chatId,`Напоминание: ${chto}`)},then - new Date())
-    
-      }
-    
-      const napomnyUtrom = (result) => {
-        const when = result[1];
-        const chto = result[2];
-    
-        var then = new Date();
-    
-        switch(when) {
-          case 'утром': 
-            then.setHours(9);
-            break;
-          case 'днем': 
-            then.setHours(13);
-            break;
-          case 'вечером': 
-            then.setHours(18);
-            break;
-          case 'ночью': 
-            then.setHours(22);
-            break;
-        }
-    
-        if (then - new Date() < 0) then.setDate(then.getDate() + 1);
-    
-        setTimeout(()=> {this.bot.sendMessage(chatId,`Напоминание: ${chto}`)},then - new Date())
-      }
-    
-      const napomnyZavtra = (result) => {
-        const when = result[1];
-        const chto = result[2];
-    
-        var then = new Date();
-    
-        switch(when) {
-          case 'завтра': 
-            then.setDate(then.getDate() + 1);
-            then.setHours(9);
-            break;
-          case 'послезавтра':
-          then.setDate(then.getDate() + 2); 
-            then.setHours(9);
-            break;
-        }
-    
-        setTimeout(()=> {this.bot.sendMessage(chatId,`Напоминание: ${chto}`)},then - new Date())
-      }
-    
-      const napomnyZavtraUtrom = (result) => {
-        const whenDay = result[1];
-        const whenTime = result[2];
-        const chto = result[3];
-    
-        switch(whenTime) {
-          case 'утром': 
-            then.setHours(9);
-            break;
-          case 'днем': 
-            then.setHours(13);
-            break;
-          case 'вечером': 
-            then.setHours(18);
-            break;
-          case 'ночью': 
-            then.setHours(22);
-            break;
-        }
-    
-        switch(when) {
-          case 'завтра': 
-            then.setDate(then.getDate() + 1);
-            break;
-          case 'послезавтра':
-          then.setDate(then.getDate() + 2);
-            break;
-        }
-    
-        setTimeout(()=> {this.bot.sendMessage(chatId,`Напоминание: ${chto}`)},then - new Date())
-      }
-    
-      const napomnyCherez = (result) => {
-        const chto = result[1];
-        const cherez = result[2];
-    
-      }
-    
-      const napomnySimple = (result) => {
-        const chto = result[1];
-        const when = result[2];
-    
-      }
-    
-      console.log('kek1-->',what.match(/(в|во) (понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье) (.+) в (.+)/));
-      switch(true) {
-        case !!what.match(/(в|во) (понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье) (.+) в (.+)/): 
-          console.log('kek-->')
-          napomnyV(what.match(/(в|во) (понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье) (.+) в (.+)/), chatId,this.bot);
-          break;
-        case !!what.match(/(утром|днем|вечером|ночью) (.+)/):
-          napomnyUtrom(what.match(/(утром|днем|вечером|ночью) (.+)/))
-          break; 
-        case !!what.match(/(завтра|послезавтра) (.+)/):
-          napomnyZavtra(what.match(/(завтра|послезавтра) (.+)/))
-          break;
-        case !!what.match(/(завтра|послезавтра) (утром|днем|вечером|ночью) (.+)/):
-          napomnyZavtraUtrom(what.match(/(завтра|послезавтра) (утром|днем|вечером|ночью) (.+)/))
-          break;
-        case !!what.match(/(.+) через (.+)/):
-          napomnyCherez(what.match(/через (.+)/))
-          break;
-        case !!what.match(/(.+) в (.+)/):
-          napomnySimple(what.match(/(.+) в (.+)/))
-          break;
-      }
-    
-    
-      //if (chatId in napomnis) napomnis[chatId]
-      //const resp = match[1]; // the captured "whatever"
-    
-      // send back the matched "whatever" to the chat
-      this.bot.sendMessage(chatId, 'Напоминание получено');
     });
     
 
@@ -358,15 +205,19 @@ class T {
     this.bot.on('inline_query', (inline_query) => {
       const {id:queryId, from, query:queryText} = inline_query;
       const results = [];
+      console.log('inlinequery--->', inline_query)
       //ffmpeg -i input.mp3 -c:a libopus output.opus
-      var voice = this.voiceDb[queryText]
-      var [mask, domain, path, port] = [this.mask, this.domain, voice.path, this.port]
+
+      if (queryText.match(/mine$/)) {
+        this.usersDb.find({chatId: from})
+      }
+      var voice = this.voiceDb[queryText];
       results.push({
         type:'voice',
         id:'1',
         voice_file_id: voice.fileId,
         title: voice.name,
-        caption: emoji.unemojify(voice.emojiCode)
+        caption: emoji.emojify(voice.emojiCode)
       })
       console.log('Inline results: ', results)
 
