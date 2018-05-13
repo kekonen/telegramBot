@@ -221,9 +221,9 @@ class T {
 
       this.VoicesDb.find({fileId: voiceMsg.voice.fileId}, (err, [voice]) => {
         if (voice) {
-          this.bot.sendMessage(chatId, 'Voice Exists');
+          this.bot.sendMessage(voice.from.id, 'Voice Exists');
         } else {
-          this.bot.sendMessage(chatId, 'Voice not exist');          
+          this.bot.sendMessage(voice.from.id, 'Voice not exist');          
         }
       })
       // if (!this.cbr.execute(audio.chat.id, audio)) {
