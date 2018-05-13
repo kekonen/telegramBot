@@ -269,8 +269,9 @@ class T {
       if (queryText.match(/mine\)$/)) {
         
       } else {
-        console.log('matched', queryText)
-        var voice = this.voiceDb[queryText]; // if want to receive more -> make request
+        var res = queryText.match(/(.+)\)$/)[1]
+        console.log('matched', res)
+        var voice = this.voiceDb[res]; // if want to receive more -> make request
         if (voice){
           console.log('voice:==>',voice)
           var v = voice.getVoiceForSend();
