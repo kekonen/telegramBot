@@ -35,14 +35,14 @@ class Voice {
 			type:'voice',
             id,
             voice_file_id: this.fileId,
-            title: voice.name + voice.emojiCode,
+            title: this.name + ' ' + this.emojiCode,
             caption: emoji.emojify(this.emojiCode)
 		}}
 		return {
 			type:'voice',
             id:'1',
             voice_file_id: this.fileId,
-            title: this.name,
+            title: this.name + ' ' + this.emojiCode,
             caption: emoji.emojify(this.emojiCode)
 		}
 	}
