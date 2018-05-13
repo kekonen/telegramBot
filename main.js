@@ -1,3 +1,4 @@
+//lol
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const Voice = require('./voice');
@@ -15,6 +16,9 @@ var ffmpeg = require('fluent-ffmpeg');
 //     const token = contents;
 // });
 
+function ifcb(query, cb){
+  if(query) cb(query)
+}
 
 class T {
   constructor(){
@@ -150,7 +154,7 @@ class T {
       this.bot.sendMessage(chatId, chatId+' -> '+resp);
     });
 
-    this.bot.onText(/\/sendVoice (.+)/, (msg, match) => {
+    this.bot.onText(/\/sendVoice (.+)\)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
       // 'match' is the result of executing the regexp above on the text content
       // of the message
@@ -182,7 +186,7 @@ class T {
       // });
     });
 
-    this.bot.onText(/\/reg (.+) (.+)/, (msg, match) => {
+    this.bot.onText(/\/reg (.+) (.+)\)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
       // 'match' is the result of executing the regexp above on the text content
       // of the message
@@ -235,9 +239,9 @@ class T {
       const results = [];
       console.log('inlinequery--->', inline_query)
       //ffmpeg -i input.mp3 -c:a libopus output.opus
-
-      if (queryText.match(/mine$/)) {
-        console.log('matched *mine')
+      
+      ifcb(queryText.match(/mine\)$/), res => {
+        console.log('matched *mine, ', res)
         this.VoicesDb.find({chatId: from.id}, (err, voices) => {
           console.log(voices)
           if (voices.length){
@@ -261,6 +265,9 @@ class T {
             })
           }
         })
+      })
+      if (queryText.match(/mine\)$/)) {
+        
       } else {
         console.log('matched', queryText)
         var voice = this.voiceDb[queryText]; // if want to receive more -> make request
