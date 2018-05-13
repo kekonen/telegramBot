@@ -215,7 +215,7 @@ class T {
     this.bot.on('voice', voiceMsg => {
       console.log('receiving voice...', voiceMsg)
 
-      this.VoicesDb.find({fileId: voiceMsg.voice.fileId}, (err, [voice]){
+      this.VoicesDb.find({fileId: voiceMsg.voice.fileId}, (err, [voice]) => {
         if (voice) {
           this.bot.sendMessage(chatId, 'Voice Exists');
         } else {
