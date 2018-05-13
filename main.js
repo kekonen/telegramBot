@@ -269,9 +269,9 @@ class T {
       if (queryText.match(/mine\)$/)) {
         
       } else {
-        var res = queryText.match(/(.+)\)$/)[1]
-        console.log('matched', res)
-        var voice = this.voiceDb[res]; // if want to receive more -> make request
+        ifcb(queryText.match(/(.+)\)$/), (res) => {
+          console.log('matched', res[1])
+        var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
         if (voice){
           console.log('voice:==>',voice)
           var v = voice.getVoiceForSend();
@@ -281,6 +281,8 @@ class T {
     
           this.bot.answerInlineQuery(queryId,results)
         } 
+        })
+        
       }
     })
   }
