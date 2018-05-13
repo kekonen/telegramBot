@@ -26,40 +26,52 @@ class T {
     this.bot = new TelegramBot(this.token, {polling: true});
     this.prop= 'kek';
 
+    this.emojiDb = 
     this.emojiDb = Object.assign({}, ...JSON.parse(fs.readFileSync('emojiDbEmpty.json', 'utf8')).map(emoji => {var plh={};plh[emoji]=[];return plh}));
-    this.voiceDb = {};
 
-    this.filesDb = new Datastore({filename : 'files.db'});
-    this.filesDb.loadDatabase();
+    this.VoicesDb = new Datastore({filename : 'voices.db'});
+    this.VoicesDb.loadDatabase();
+    this.voiceDb = {db:this.VoicesDb};
 
     this.usersDb = new Datastore({filename : 'users.db'});
     this.usersDb.loadDatabase();
 
     this.cbr = new CallbackRouter(this);
 
-    this.filesDb.find({type: 'voice'}, (err, voices) => {
+    this.VoicesDb.find({}, (err, voices) => {
       voices.forEach(voice => {
-        this.voiceDb[voice.name] = new Voice(voice.path, voice.name, voice.emojiCode, voice.fileId)
+        this.voiceDb[voice.name] = new Voice(voice.path, voice.name, voice.emojiCode, {fileId:voice.fileId, chatId:voice.chatId});
       });
     })
     
     this.cbr.registerFunction('registerMp3File', (chatId, context, audio) => {
-      console.log('lol->',chatId,context)
+      console.log('register context ->',chatId,context)
       return this.bot.getFile(audio.audio.file_id).then(fileInfo => {
-        console.log('fileUrl--->', fileInfo);
+        // console.log('fileUrl--->', fileInfo);
         var fileLink = `https://api.telegram.org/file/bot${this.token}/${fileInfo.file_path}`;
         return rp.get({uri:fileLink, encoding: 'binary'})
         .then(body => {
           let writeStream = fs.createWriteStream(`audios/${chatId}_${audio.audio.file_id}.mp3`);
           writeStream.write(body, 'binary');
           writeStream.on('finish', () => {
-            console.log('wrote all data to file');
+            // console.log('wrote all data to file');
             //ffmpeg -i input.mp3 -c:a libopus output.opus
             var command = ffmpeg(`audios/${chatId}_${audio.audio.file_id}.mp3`).audioCodec('libopus').output(`audios/${audio.audio.file_id}.opus`)
             .on('end', () => {
-              console.log('context',context)
-              this.createVoice(`audios/${audio.audio.file_id}.opus`, context.name, context.emojiId);
-              this.usersDb.insert({chatId, userVoices: [audio.audio.file_id]});
+              console.log('context ready --->',context)
+              this.createVoice(chatId, `audios/${audio.audio.file_id}.opus`, context.name, context.emojiId, voice => {
+                this.usersDb.find({chatId}, (err, res) => {
+                  if (res.length) {
+                    this.usersDb.update({chatId}, { $push: { userVoices: { $each: [voice.fileId]}}}, {});
+
+                  } else {
+                    this.usersDb.insert({chatId, userVoices: [voice.fileId]});
+                  }
+                })
+                // this.usersDb.insert({chatId, userVoices: [voice.fileId]});
+                
+              });
+              // this.usersDb.insert({chatId, userVoices: [audio.audio.file_id]});
             } ).run();
           });
           writeStream.end();
@@ -96,13 +108,14 @@ class T {
 
   }
 
-  createVoice(path, name, emojiCode){
+  createVoice(chatId, path, name, emojiCode, callback){
     console.log('Creating voice')
-    this.filesDb.find({path, name, emojiCode}, (err, foundVoices) => {
+    this.VoicesDb.find({name, emojiCode, chatId}, (err, foundVoices) => {
       console.log(foundVoices)
       if (!foundVoices.length) {
         console.log(` - Voice Not Found, creating -> name:${name}, path:${path}, emoji:${emoji.get(emojiCode)}`)
-        var voice = new Voice(path, name, emojiCode);
+        var voice = new Voice(path, name, emojiCode, {VoicesDB:this.VoicesDb, chatId});
+        console.log('new Voice',voice)
 
         this.bot.sendVoice(this.serviceChatId, voice.path)
           .then(answer => {
@@ -110,8 +123,8 @@ class T {
             voice.setFileId(fileId);
             this.voiceDb[name] = voice;
             this.emojiDb[emojiCode] = voice;
-            console.log('voice data ------>',voice.getVoiceData())
-            this.filesDb.insert(voice.getVoiceData())
+            this.VoicesDb.insert(voice.getVoiceData())
+            if (callback) callback(voice);
           });
           
         
@@ -169,7 +182,7 @@ class T {
       // });
     });
 
-    this.bot.onText(/\/registerVoice (.+) (.+)/, (msg, match) => {
+    this.bot.onText(/\/reg (.+) (.+)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
       // 'match' is the result of executing the regexp above on the text content
       // of the message
@@ -193,10 +206,25 @@ class T {
     });
 
     this.bot.on('audio', audio => {
-      console.log('start on audio')
+      console.log('receiving audio...')
       if (!this.cbr.execute(audio.chat.id, audio)) {
-        console.log('audio-->', audio);
+        console.log('Audio exists-->', audio);
       }
+    });
+
+    this.bot.on('voice', voiceMsg => {
+      console.log('receiving voice...', voiceMsg)
+
+      this.VoicesDb.find({fileId: voiceMsg.voice.fileId}, (err, [voice]){
+        if (voice) {
+          this.bot.sendMessage(chatId, 'Voice Exists');
+        } else {
+          this.bot.sendMessage(chatId, 'Voice not exist');          
+        }
+      })
+      // if (!this.cbr.execute(audio.chat.id, audio)) {
+      //   console.log('Audio exists-->', audio);
+      // }
     });
     
 
@@ -209,19 +237,43 @@ class T {
       //ffmpeg -i input.mp3 -c:a libopus output.opus
 
       if (queryText.match(/mine$/)) {
-        this.usersDb.find({chatId: from})
+        console.log('matched *mine')
+        this.VoicesDb.find({chatId: from.id}, (err, voices) => {
+          console.log(voices)
+          if (voices.length){
+            console.log('1=>', voices)
+            voices.forEach((voice, i) => {
+              this.VoicesDb.find({fileId: voice.fileId}, (err, [voice]) => {
+                console.log('2=>', voice)
+                results.push({
+                  type: 'voice',
+                  id: i,
+                  voice_file_id: voice.fileId,
+                  caption: voice.emojiCode,
+                  title: voice.name
+                })
+                console.log('results => ',results)
+                this.bot.answerInlineQuery(queryId, results)
+                
+                
+              })
+              
+            })
+          }
+        })
+      } else {
+        console.log('matched', queryText)
+        var voice = this.voiceDb[queryText]; // if want to receive more -> make request
+        if (voice){
+          console.log('voice:==>',voice)
+          var v = voice.getVoiceForSend();
+          console.log('v--->', v)
+          results.push(v)
+          console.log('Inline results: ', results)
+    
+          this.bot.answerInlineQuery(queryId,results)
+        } 
       }
-      var voice = this.voiceDb[queryText];
-      results.push({
-        type:'voice',
-        id:'1',
-        voice_file_id: voice.fileId,
-        title: voice.name,
-        caption: emoji.emojify(voice.emojiCode)
-      })
-      console.log('Inline results: ', results)
-
-      this.bot.answerInlineQuery(queryId,results)
     })
   }
 }
