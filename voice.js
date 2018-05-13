@@ -35,7 +35,7 @@ class Voice {
 			type:'voice',
             id,
             voice_file_id: this.fileId,
-            title: this.name,
+            title: `${this.name}  ${this.emojiCode}`,
             caption: emoji.emojify(this.emojiCode)
 		}}
 		return {
