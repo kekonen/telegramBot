@@ -269,6 +269,7 @@ class T {
       if (queryText.match(/mine\)$/)) {
         
       } else {
+        console.log('queryText: ')
         ifcb(queryText.match(/(.+)\)$/), (res) => {
           console.log('queryText: ', res)
           console.log('matched', res[1])
