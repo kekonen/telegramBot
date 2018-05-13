@@ -64,6 +64,7 @@ class T {
             .on('end', () => {
               console.log('context ready --->',context)
               this.createVoice(chatId, `audios/${audio.audio.file_id}.opus`, context.name, context.emojiId, voice => {
+                console.log('insert done--')
                 this.usersDb.find({chatId}, (err, res) => {
                   if (res.length) {
                     this.usersDb.update({chatId}, { $push: { userVoices: { $each: [voice.fileId]}}}, {});
@@ -128,6 +129,7 @@ class T {
             this.voiceDb[name] = voice;
             this.emojiDb[emojiCode] = voice;
             this.VoicesDb.insert(voice.getVoiceData())
+            console.log('insert done--')
             if (callback) callback(voice);
           });
           
