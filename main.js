@@ -271,17 +271,17 @@ class T {
       } else {
         ifcb(queryText.match(/(.+)\)$/), (res) => {
           console.log('matched', res[1])
-        var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
-        if (voice){
-          console.log('voice:==>',voice)
-          var v = voice.getVoiceForSend();
-          console.log('v--->', v)
-          results.push(v)
-          console.log('Inline results: ', results)
-    
-          this.bot.answerInlineQuery(queryId,results)
-        } 
-        })
+          var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
+          if (voice){
+            console.log('voice:==>',voice)
+            var v = voice.getVoiceForSend();
+            console.log('v--->', v)
+            results.push(v)
+            console.log('Inline results: ', results)
+      
+            this.bot.answerInlineQuery(queryId,results)
+          } 
+          })
         
       }
     })
