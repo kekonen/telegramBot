@@ -223,7 +223,7 @@ class T {
         if (voice) {
           this.bot.sendMessage(voice.from.id, 'Voice Exists');
         } else {
-          this.bot.sendMessage(voice.from.id, 'Voice not exist');          
+          //this.bot.sendMessage(voice.from.id, 'Voice not exist');          
         }
       })
       // if (!this.cbr.execute(audio.chat.id, audio)) {
