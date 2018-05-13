@@ -67,10 +67,13 @@ class T {
                 console.log('insert done--')
                 this.usersDb.find({chatId}, (err, res) => {
                   if (res.length) {
+                    console.log('update start--')
                     this.usersDb.update({chatId}, { $push: { userVoices: { $each: [voice.fileId]}}}, {});
-
+                    console.log('update done--')
                   } else {
+                    console.log('insert start--')
                     this.usersDb.insert({chatId, userVoices: [voice.fileId]});
+                    console.log('insert done--')
                   }
                 })
                 // this.usersDb.insert({chatId, userVoices: [voice.fileId]});
