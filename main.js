@@ -254,7 +254,7 @@ class T {
                   id: i,
                   voice_file_id: voice.fileId,
                   caption: voice.emojiCode,
-                  title: voice.name
+                  title: voice.name + voice.emojiCode
                 })
                 console.log('results => ',results)
                 this.bot.answerInlineQuery(queryId, results)
