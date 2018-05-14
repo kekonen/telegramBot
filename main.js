@@ -249,14 +249,15 @@ class T {
 
     this.bot.on('voice', voiceMsg => {
       console.log('receiving voice...', voiceMsg)
+      var chatId = voice.from.id
 
       this.VoicesDb.find({fileId: voiceMsg.voice.fileId}, (err, [voice]) => {
         if (voice) {
-          this.bot.sendMessage(voice.from.id, 'Voice Exists');
+          this.bot.sendMessage(chatId, 'Voice Exists');
           // add to favorites
         } else {
           this.cbr.subscribe(chatId,'registerIncomingVoice', {voiceMsg})
-          this.bot.sendMessage(voice.from.id, 'Voice received, please supply name and emoji');
+          this.bot.sendMessage(chatId, 'Voice received, please supply name and emoji');
           //this.bot.sendMessage(voice.from.id, 'Voice not exist');          
         }
       })
