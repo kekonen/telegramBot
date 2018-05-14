@@ -12,8 +12,24 @@ bot.onText(/\/gitpull/, (msg, match) => {
     if (serviceChatIds.indexOf(msg.from.id) >= 0) {
         var dir = exec("git pull", function(err, stdout, stderr) {
             if (err) {
-              // should have err.code here?  
+                bot.sendMessage(msg.from.id, 'Error:\n```\n' + err + '```', {parse_mode:'Markdown'}) 
+                bot.sendMessage(msg.from.id, 'Stdout:\n```\n' + stdout + '```', {parse_mode:'Markdown'}) 
             }
+            bot.sendMessage(msg.from.id, '```\n' + stdout + '```', {parse_mode:'Markdown'})
+            console.log(stdout);
+          });
+    }
+})
+
+bot.onText(/\/changeBranch (.+)/, (msg, match) => {
+    console.log(msg);
+    if (serviceChatIds.indexOf(msg.from.id) >= 0) {
+        var dir = exec(`git checkout ${match[1]}`, function(err, stdout, stderr) {
+            if (err) {
+                bot.sendMessage(msg.from.id, 'Error:\n```\n' + err + '```', {parse_mode:'Markdown'}) 
+                bot.sendMessage(msg.from.id, 'Stdout:\n```\n' + stdout + '```', {parse_mode:'Markdown'}) 
+            }
+            bot.sendMessage(msg.from.id, '```\n' + stdout + '```', {parse_mode:'Markdown'})
             console.log(stdout);
           });
     }
