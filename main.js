@@ -308,9 +308,9 @@ class T {
 
       ifcb(queryText.match(/oyo\)$/), res => {
         console.log('matched *fav, ', res)
-        this.usersDb.find({chatId}, (err, fileNames) => {
-          console.log('fav--->', fileNames)
-          fileNames.forEach( (voiceFileId, i) => {
+        this.usersDb.find({chatId}, (err, [{fav}]) => {
+          console.log('fav--->', fav)
+          fav.forEach( (voiceFileId, i) => {
             this.VoicesDb.find({fileId: voiceFileId}, (err, [voice]) => {
               console.log('Adding audio-->',voice)
               if (voice) {
