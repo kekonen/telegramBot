@@ -88,6 +88,16 @@ class T {
       return this.bot.sendMessage(chatId, this.prop);
     })
     
+    this.cbr.registerFunction('registerIncomingVoice', (chatId, context, [name, emojiCode]) => {
+      console.log('rregistering incoming voice ->',chatId,context)
+      var {file_id} = context.voiceMsg.voice;
+      var voice = new Voice('', name, emojiCode, {VoicesDB:this.VoicesDb, chatId, fileId: file_id});
+      this.voiceDb[name] = voice;
+      this.emojiDb[emojiCode] = voice;
+      // this.createVoice(chatId, `audios/${audio.audio.file_id}.opus`, name, emojiId, l
+      
+      return this.bot.sendMessage(chatId, `Voice added: ${name}, ${emojiCode}`);
+    })
     
     //console.log(this.emojiDb);
     
@@ -131,7 +141,8 @@ class T {
             voice.setFileId(fileId);
             this.voiceDb[name] = voice;
             this.emojiDb[emojiCode] = voice;
-            this.VoicesDb.insert(voice.getVoiceData())
+            voice.addVoicesDb(this.VoicesDb);
+            //this.VoicesDb.insert(voice.getVoiceData())
             console.log('insert done--')
             if (callback) callback(voice);
           });
@@ -214,10 +225,25 @@ class T {
       // });
     });
 
+    this.bot.onText(/(\w+) (.+)/, (msg, match) => {
+      const chatId = msg.chat.id;
+      console.log('chatId===>', chatId)
+      
+      if (!this.cbr.execute(chatId, [match[1], match[2]])) {
+        console.log('registered -->', match);
+      } else {
+        this.bot.sendMessage(chatId, 'wtf?');
+      }
+
+      
+    });
+
     this.bot.on('audio', audio => {
       console.log('receiving audio...')
       if (!this.cbr.execute(audio.chat.id, audio)) {
         console.log('Audio exists-->', audio);
+      } else {
+        
       }
     });
 
@@ -227,7 +253,10 @@ class T {
       this.VoicesDb.find({fileId: voiceMsg.voice.fileId}, (err, [voice]) => {
         if (voice) {
           this.bot.sendMessage(voice.from.id, 'Voice Exists');
+          // add to favorites
         } else {
+          this.cbr.subscribe(chatId,'registerIncomingVoice', {voiceMsg})
+          this.bot.sendMessage(voice.from.id, 'Voice received, please supply name and emoji');
           //this.bot.sendMessage(voice.from.id, 'Voice not exist');          
         }
       })
@@ -258,7 +287,7 @@ class T {
                   type: 'voice',
                   id: i,
                   voice_file_id: voice.fileId,
-                  caption: voice.emojiCode,
+                  // caption: voice.emojiCode,
                   title: voice.name + voice.emojiCode
                 })
                 console.log('results => ',results)

@@ -6,21 +6,26 @@ class Voice {
 		this.name = name;
 		this.emojiCode = emojiCode;
 
-		this.VoicesDB = VoicesDB;
+		
 		this.fileId = fileId;
 
 		this.chatId = chatId;
+
+		if (VoicesDB) {
+			this.addVoicesDb(VoicesDB);
+		}
 		console.log(`path:${path}, name:${name}, emojiCode:${emojiCode}, {VoicesDB:${VoicesDB}, fileId:${fileId}, chatId:${chatId}}`)
 	}
 
 	addVoicesDb(VoicesDB) {
-		this.VoicesDB = VoicesDB;
+		if (!this.VoicesDB) this.VoicesDB = VoicesDB;
 
 		VoicesDB.insert(this.getVoiceData())
 	}
 
 	setFileId(fileId) {
 		this.fileId = fileId;
+		VoicesDB.update({name: this.name, emojiCode: this.emojiCode}, {fileId})
 		return this
 	}
 
