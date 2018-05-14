@@ -306,7 +306,7 @@ class T {
         })
       })
 
-      ifcb(queryText.match(/oyo\)$/), res => {
+      ifcb(queryText.match(/uyu\)$/), res => {
         console.log('matched *fav, ', res)
         this.usersDb.find({chatId}, (err, [{fav}]) => {
           console.log('fav--->', fav)
