@@ -301,6 +301,7 @@ class T {
               })
               
             })
+            console.log('results => ',results)
             this.bot.answerInlineQuery(queryId, results)
           }
         })
@@ -324,6 +325,7 @@ class T {
               }
             })
           })
+          console.log('results => ',results)
           this.bot.answerInlineQuery(queryId, results)
         })
       })
