@@ -333,7 +333,7 @@ class T {
                   title: voice.name + voice.emojiCode
                 })
                 if (i==fav.length-1) {
-                  console.log('results => ',results)
+                  console.log('results => ',i,fav.length-1,results)
                   this.bot.answerInlineQuery(queryId, results)
                 }
               }
