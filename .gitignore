@@ -1,3 +1,6 @@
 *.key
 node_modules/
 .DS_Store
+*.db
+audios/21*.opus
+audios/21*.mp3
