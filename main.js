@@ -222,7 +222,7 @@ class T {
       // .then(answer => {
       //   var fileId = answer.voice.file_id;
       //   voice.setFileId(fileId);
-      // });
+ 
     });
 
     this.bot.onText(/(\w+) (.+)/, (msg, match) => {
