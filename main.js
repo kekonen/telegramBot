@@ -17,7 +17,7 @@ var ffmpeg = require('fluent-ffmpeg');
 // });
 
 function ifcb(query, cb){
-  if(query) return cb(query)
+  if(query) {console.log('match > ', query);return cb(query)}
   return 0
 }
 
