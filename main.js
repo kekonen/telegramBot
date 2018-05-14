@@ -306,7 +306,7 @@ class T {
         })
       })
 
-      ifcb(queryText.match(/fav$/), res => {
+      ifcb(queryText.match(/fav\)$/), res => {
         console.log('matched *fav, ', res)
         this.usersDb.find({chatId}, (err, fileNames) => {
           console.log('fav--->', fileNames)
