@@ -85,7 +85,7 @@ class T {
           writeStream.end();
         })
       })
-      return this.bot.sendMessage(chatId, this.prop);
+      return 0
     })
     
     this.cbr.registerFunction('registerIncomingVoice', (chatId, context, [name, emojiCode]) => {
@@ -96,7 +96,7 @@ class T {
       this.emojiDb[emojiCode] = voice;
       // this.createVoice(chatId, `audios/${audio.audio.file_id}.opus`, name, emojiId, l
       
-      return this.bot.sendMessage(chatId, `Voice added: ${name}, ${emojiCode}`);
+      return 0
     })
     
     //console.log(this.emojiDb);
@@ -230,6 +230,7 @@ class T {
       console.log('chatId===>', chatId)
       
       if (!this.cbr.execute(chatId, [match[1], match[2]])) {
+        this.bot.sendMessage(chatId, `Voice added!`);
         console.log('registered -->', match);
       } else {
         this.bot.sendMessage(chatId, 'wtf?');
