@@ -307,7 +307,7 @@ class T {
         })
       })
 
-      ifcb(queryText.match(/gov$/), res => {
+      ifcb(queryText.match(/trt$/), res => {
         console.log('matched *fav, ', res)
         this.usersDb.find({chatId}, (err, [{fav}]) => {
           console.log('fav--->', fav)
