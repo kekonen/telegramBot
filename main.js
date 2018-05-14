@@ -257,7 +257,17 @@ class T {
       this.VoicesDb.find({fileId}, (err, [voice]) => {
         if (voice) {
           this.bot.sendMessage(chatId, 'Voice Exists now in your /fav');
-          this.usersDb.update({chatId}, { $push: { fav: { $each: [fileId]}}});
+          this.usersDb.find({chatId}, (err, [res]) => {
+            if (res) {
+              console.log('update start--')
+              this.usersDb.update({chatId}, { $push: { fav: { $each: [fileId]}}});
+              console.log('update done--')
+            } else {
+              console.log('insert start--')
+              this.usersDb.insert({chatId, fav: [fileId]});
+              console.log('insert done--')
+            }
+          })
           
           // add to favorites
         } else {
