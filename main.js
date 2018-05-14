@@ -251,10 +251,13 @@ class T {
     this.bot.on('voice', voiceMsg => {
       console.log('receiving voice...', voiceMsg)
       var chatId = voiceMsg.from.id
+      var fileId = voiceMsg.voice.file_id
 
-      this.VoicesDb.find({fileId: voiceMsg.voice.fileId}, (err, [voice]) => {
+      this.VoicesDb.find({fileId}, (err, [voice]) => {
         if (voice) {
-          this.bot.sendMessage(chatId, 'Voice Exists');
+          this.bot.sendMessage(chatId, 'Voice Exists now in your /fav');
+          this.usersDb.update({chatId}, { $push: { fav: { $each: [fileId]}}});
+          
           // add to favorites
         } else {
           this.cbr.subscribe(chatId,'registerIncomingVoice', {voiceMsg})
