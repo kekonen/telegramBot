@@ -309,8 +309,10 @@ class T {
       ifcb(queryText.match(/fav$/), res => {
         console.log('matched *fav, ', res)
         this.usersDb.find({chatId}, (err, fileNames) => {
+          console.log('fav--->', fileNames)
           fileNames.forEach( (voiceFileId, i) => {
             this.VoicesDb.find({fileId: voiceFileId}, (err, [voice]) => {
+              console.log('Adding audio-->',voice)
               if (voice) {
                 results.push({
                   type: 'voice',
