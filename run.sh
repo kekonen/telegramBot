@@ -1,0 +1,1 @@
+forever start --uid main -c nodemon main.js && forever start --uid service -c nodemon serviceBot.js
