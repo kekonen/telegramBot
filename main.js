@@ -344,7 +344,7 @@ class T {
       })
 
         
-      ifcb(queryText.match(/(.+)\)$/), (res) => {
+      ifcb(queryText.match(/(\w+)\)$/), (res) => {
         console.log('queryText: ', res)
         console.log('matched', res[1])
         var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
