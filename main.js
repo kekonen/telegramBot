@@ -249,7 +249,7 @@ class T {
 
     this.bot.on('voice', voiceMsg => {
       console.log('receiving voice...', voiceMsg)
-      var chatId = voice.from.id
+      var chatId = voiceMsg.from.id
 
       this.VoicesDb.find({fileId: voiceMsg.voice.fileId}, (err, [voice]) => {
         if (voice) {
