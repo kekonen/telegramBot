@@ -291,7 +291,7 @@ class T {
       console.log('inlinequery--->', inline_query)
       //ffmpeg -i input.mp3 -c:a libopus output.opus
       
-      ifcb(queryText.match(/zhop$/), res => {
+      ifcb(queryText.match(/yeo$/), res => {
         console.log('matched *mine, ', res)
         this.VoicesDb.find({chatId}, (err, voices) => {
           console.log(voices)
