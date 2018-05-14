@@ -8,6 +8,7 @@ var serviceChatId = 218135295;
 var bot = new TelegramBot(token, {polling: true});
 
 bot.onText(/\/gitpull/, (msg, match) => {
+    console.log(msg)
     dir = exec("git pull", function(err, stdout, stderr) {
         if (err) {
           // should have err.code here?  
