@@ -307,6 +307,10 @@ class T {
                   // caption: voice.emojiCode,
                   title: voice.name + voice.emojiCode
                 })
+                if (i==voices.length-1) {
+                  console.log(`results => ${i},${voices.length-1},${results}`)
+                  this.bot.answerInlineQuery(queryId, results)
+                }
                 console.log('results => ',results)
               })
               
@@ -334,7 +338,7 @@ class T {
                 })
                 if (i==fav.length-1) {
                   console.log(`results => ${i},${fav.length-1},${results}`)
-                  //this.bot.answerInlineQuery(queryId, results)
+                  this.bot.answerInlineQuery(queryId, results)
                 }
               }
             })
