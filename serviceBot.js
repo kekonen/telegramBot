@@ -4,15 +4,17 @@ var sys = require('sys')
 var exec = require('child_process').exec;
 
 var token = fs.readFileSync('telegramService.key', 'utf8').trim();
-var serviceChatId = 218135295;
+var serviceChatIds = [218135295];
 var bot = new TelegramBot(token, {polling: true});
 
 bot.onText(/\/gitpull/, (msg, match) => {
-    console.log(msg)
-    dir = exec("git pull", function(err, stdout, stderr) {
-        if (err) {
-          // should have err.code here?  
-        }
-        console.log(stdout);
-      });
+    console.log(msg);
+    if (serviceChatIds.indexOf(msg.from.id) >= 0) {
+        var dir = exec("git pull", function(err, stdout, stderr) {
+            if (err) {
+              // should have err.code here?  
+            }
+            console.log(stdout);
+          });
+    }
 })
