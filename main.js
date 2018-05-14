@@ -302,7 +302,7 @@ class T {
                 console.log('2=>', voice)
                 results.push({
                   type: 'voice',
-                  id: i,
+                  id: i.toString(),
                   voice_file_id: voice.fileId,
                   // caption: voice.emojiCode,
                   title: voice.name + voice.emojiCode
@@ -327,7 +327,7 @@ class T {
               if (voice) {
                 results.push({
                   type: 'voice',
-                  id: i,
+                  id: i.toString(),
                   voice_file_id: voice.fileId,
                   // caption: voice.emojiCode,
                   title: voice.name + voice.emojiCode
