@@ -320,10 +320,12 @@ class T {
                   title: voice.name + voice.emojiCode
                 })
               }
+            })
           })
           this.bot.answerInlineQuery(queryId, results)
         })
       })
+
         
       ifcb(queryText.match(/(.+)\)$/), (res) => {
         console.log('queryText: ', res)
