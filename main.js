@@ -353,7 +353,7 @@ class T {
           console.log('queryText: ', res)
           console.log('matched', res[1])
           // var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
-          this.voiceDB.find({name: {
+          this.VoicesDb.find({name: {
               "$regex": new RegExp(match),
           }}, (err, voices) => {
             if (!err) {
