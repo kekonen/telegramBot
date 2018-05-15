@@ -356,6 +356,7 @@ class T {
           this.voiceDB.find({name: {
               "$regex": new RegExp(match , 'i'),
           }}, (err, voices) => {
+            console.log('search results => ', voices)
             let i = 0;
             var results = voices.map(voice => ({
               type:'voice',
