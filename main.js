@@ -139,7 +139,7 @@ class T {
         this.bot.sendVoice(this.serviceChatId, voice.path)
           .then(answer => {
             console.log('answer--->', answer)
-            var fileId = answer.voice.fileId;
+            var fileId = answer.voice.file_id;
             voice.setFileId(fileId);
             this.voiceDb[name] = voice;
             this.emojiDb[emojiCode] = voice;
