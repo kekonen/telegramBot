@@ -206,6 +206,7 @@ class T {
 
     this.bot.onText(/\/sendVoiceOgg (.+)\)/, (msg, match) => {
 
+      console.log('sendVoiceOgg',msg, match)
       const chatId = msg.chat.id;
       const resp = match[1]; // the captured "whatever"
       var voice = this.voiceDb[resp];
