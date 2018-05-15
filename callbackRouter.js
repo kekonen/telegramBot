@@ -28,6 +28,12 @@ class CallbackRouter {
         console.log('4')
     }
 
+    cancel(chatId) {
+        console.log('Cancel -> ',chatId)
+        this.callbackDb[chatId] = [];
+        return true
+    }
+
     registerFunction(functionName, func){
         this.callbackFunctions[functionName] = func.bind(this); //if want to work with inside of router use anonimous function definition, otherwise arrow
     }

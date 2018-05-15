@@ -1,4 +1,4 @@
-//lol
+//AwADBAADkQMAApeh2VMvwPLjrmYooAI
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const Voice = require('./voice');
@@ -250,6 +250,14 @@ class T {
       } else {
         this.bot.sendMessage(chatId, 'wtf?');
       }
+
+      
+    });
+
+    this.bot.onText(/\/cancel/, (msg, match) => {
+      const chatId = msg.chat.id;
+      console.log('chatIdCancel===>', chatId)
+      this.cbr.cancel(chatId);
 
       
     });
