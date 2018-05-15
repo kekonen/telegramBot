@@ -311,6 +311,8 @@ class T {
                   if (i==voices.length-1) {
                     console.log(`results => ${i},${voices.length-1},${results}`)
                     this.bot.answerInlineQuery(queryId, results)
+                  } else {
+                    console.log('i,vlength->', i,voices.length-1)
                   }
                   console.log('results => ',results)
                 })
