@@ -138,7 +138,7 @@ class T {
 
         this.bot.sendVoice(this.serviceChatId, voice.path)
           .then(answer => {
-            var fileId = answer.voice.file_id;
+            var fileId = answer.voice.fileId;
             voice.setFileId(fileId);
             this.voiceDb[name] = voice;
             this.emojiDb[emojiCode] = voice;
