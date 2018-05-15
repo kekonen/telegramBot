@@ -304,7 +304,7 @@ class T {
                   results.push({
                     type: 'voice',
                     id: i.toString(),
-                    voice_file_id: voice.fileId,
+                    voice_file_id: voice.file_id,
                     // caption: voice.emojiCode,
                     title: voice.name + voice.emojiCode
                   })
