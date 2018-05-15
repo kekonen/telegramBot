@@ -138,6 +138,7 @@ class T {
 
         this.bot.sendVoice(this.serviceChatId, voice.path)
           .then(answer => {
+            console.log('answer--->', answer)
             var fileId = answer.voice.fileId;
             voice.setFileId(fileId);
             this.voiceDb[name] = voice;
