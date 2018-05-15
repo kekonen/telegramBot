@@ -388,8 +388,7 @@ class T {
                   type:'voice',
                         id: i++,
                         voice_file_id: voice.fileId,
-                        title: voice.name + ' ' + voice.emojiCode,
-                        caption: emoji.emojify(voice.emojiCode)
+                        title: voice.name + ' ' + voice.emojiCode
                 }))
                 this.bot.answerInlineQuery(queryId,results)
               } else {
