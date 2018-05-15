@@ -67,7 +67,7 @@ class T {
               this.createVoice(chatId, `audios/${audio.audio.file_id}.opus`, context.name, context.emojiId, voice => {
                 console.log('insert done--')
                 this.usersDb.find({chatId}, (err, res) => {
-                  if (res.length) {
+                  if (res.length && voice.fileId) {
                     console.log('update start--')
                     this.usersDb.update({chatId}, { $push: { userVoices: { $each: [voice.fileId]}}}, {});
                     console.log('update done--')
@@ -269,7 +269,7 @@ class T {
       var fileId = voiceMsg.voice.file_id
 
       this.VoicesDb.find({fileId}, (err, [voice]) => {
-        if (voice) {
+        if (voice && fileId) {
           this.bot.sendMessage(chatId, 'Voice Exists now in your /fav');
           this.usersDb.find({chatId}, (err, [res]) => {
             if (res) {
