@@ -226,7 +226,7 @@ class T {
  
     });
 
-    this.bot.onText(/(\w+)\/(.+)/, (msg, match) => {
+    this.bot.onText(/(\w+)\\(.+)/, (msg, match) => {
       const chatId = msg.chat.id;
       console.log('chatId===>', chatId)
       
