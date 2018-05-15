@@ -419,7 +419,7 @@ class T {
         }):
           break;
         default: 
-          this.bot.sendMessage(chatId,'Not recognised' + queryText)
+          console.log(chatId,'Not recognised' + queryText)
 
       }
       
