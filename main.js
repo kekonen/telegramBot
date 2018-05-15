@@ -397,7 +397,7 @@ class T {
         }):
           break;
         default: 
-          this.bot.sendMessage(chatId,'Not recognised')
+          this.bot.sendMessage(chatId,'Not recognised' + queryText)
 
       }
       
