@@ -372,7 +372,7 @@ class T {
           })
         }):
           break;
-        case !!ifcb(queryText.match(/([\wа-яА-Я, ]+)$/), (res) => {
+        case !!ifcb(queryText.toLowerCase().match(/([\wа-яА-Я, ]+)$/), (res) => {
           var match = res[1];
           console.log('queryText: ', res)
           console.log('matched', res[1])
