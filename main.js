@@ -179,7 +179,7 @@ class T {
       const resp = match[1]; // the captured "whatever"
       //var voice = this.voiceDb[resp];
 
-      console.log('SendVoice--->', chatId, voice)
+      console.log('SendVoice--->', chatId, 'audios/'+resp)
       this.bot.sendVoice(chatId, 'audios/'+resp, {caption: 'TakeIt'})
     });
 
