@@ -204,6 +204,16 @@ class T {
       // });
     });
 
+    this.bot.onText(/\/sendVoiceOgg (.+)\)/, (msg, match) => {
+
+      const chatId = msg.chat.id;
+      const resp = match[1]; // the captured "whatever"
+      var voice = this.voiceDb[resp];
+
+      console.log('SendVoice--->', chatId, voice)
+      this.bot.sendVoice(chatId, voice, {caption: 'TakeIt'})
+    });
+
     this.bot.onText(/\/reg (.+) (.+)\)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
       // 'match' is the result of executing the regexp above on the text content
