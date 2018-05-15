@@ -349,18 +349,36 @@ class T {
 
         
       ifcb(queryText.match(/(\w+)\)$/), (res) => {
+        var match = res[1];
         console.log('queryText: ', res)
         console.log('matched', res[1])
-        var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
-        if (voice){
-          console.log('voice:==>',voice)
-          var v = voice.getVoiceForSend();
-          console.log('v--->', v)
-          results.push(v)
-          console.log('Inline results: ', results)
-    
+        // var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
+        this.voiceDB.find({name: {
+            "$regex": new RegExp(match , 'i'),
+        }}, (err, voices) => {
+          let i = 0;
+          var results = voices.map(voice => ({
+            type:'voice',
+                  id: i++,
+                  voice_file_id: voice.fileId,
+                  title: voice.name + ' ' + voice.emojiCode,
+                  caption: emoji.emojify(voice.emojiCode)
+          }))
+
           this.bot.answerInlineQuery(queryId,results)
-        } 
+        })
+        //searchString = searchString.split(' ').join('|');
+        //var regex = new RegExp(searchString, `i`);
+
+        // if (voice){
+        //   console.log('voice:==>',voice)
+        //   var v = voice.getVoiceForSend();
+        //   console.log('v--->', v)
+        //   results.push(v)
+        //   console.log('Inline results: ', results)
+    
+        //   this.bot.answerInlineQuery(queryId,results)
+        // } 
       })
     })
   }
