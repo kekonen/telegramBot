@@ -299,14 +299,14 @@ class T {
             if (voices.length){
               console.log('1=>', voices)
               voices.forEach((voice, i) => {
-                this.VoicesDb.find({fileId: voice.fileId}, (err, [voice]) => {
-                  console.log('2=>', voice)
+                this.VoicesDb.find({fileId: voice.fileId}, (err, [voiceFromDb]) => {
+                  console.log('2=>', voiceFromDb)
                   results.push({
                     type: 'voice',
                     id: i.toString(),
-                    voice_file_id: voice.fileId,
+                    voice_file_id: voiceFromDb.fileId,
                     // caption: voice.emojiCode,
-                    title: voice.name + voice.emojiCode
+                    title: voiceFromDb.name + voiceFromDb.emojiCode
                   })
                   if (i==voices.length-1) {
                     console.log(`results => ${i},${voices.length-1},${results}`)
