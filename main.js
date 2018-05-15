@@ -356,21 +356,26 @@ class T {
           this.voiceDB.find({name: {
               "$regex": new RegExp(match),
           }}, (err, voices) => {
-            if (err) {console.log('err->',err);return err}
-            if (voices.length){
-              console.log('search results => ', voices)
-              let i = 0;
-              var results = voices.map(voice => ({
-                type:'voice',
-                      id: i++,
-                      voice_file_id: voice.fileId,
-                      title: voice.name + ' ' + voice.emojiCode,
-                      caption: emoji.emojify(voice.emojiCode)
-              }))
-              this.bot.answerInlineQuery(queryId,results)
+            if (!err) {
+              if (voices.length){
+                console.log('search results => ', voices)
+                let i = 0;
+                var results = voices.map(voice => ({
+                  type:'voice',
+                        id: i++,
+                        voice_file_id: voice.fileId,
+                        title: voice.name + ' ' + voice.emojiCode,
+                        caption: emoji.emojify(voice.emojiCode)
+                }))
+                this.bot.answerInlineQuery(queryId,results)
+              } else {
+                console.log(`lol -> [${match}]`)
+              }
             } else {
-              console.log(`lol -> [${match}]`)
+              console.log('error->', err)
+              return err
             }
+            
             
   
             
