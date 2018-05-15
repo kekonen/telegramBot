@@ -25,7 +25,12 @@ class Voice {
 
 	setFileId(fileId) {
 		this.fileId = fileId;
-		VoicesDB.update({name: this.name, emojiCode: this.emojiCode}, {fileId})
+		if (this.VoicesDB) {
+			this.VoicesDB.update({name: this.name, emojiCode: this.emojiCode}, {fileId})
+		} else {
+			console.log('VOiceDB used but not good')
+		}
+		
 		return this
 	}
 
