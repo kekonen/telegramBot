@@ -291,95 +291,106 @@ class T {
       console.log('inlinequery--->', inline_query)
       //ffmpeg -i input.mp3 -c:a libopus output.opus
       
-      ifcb(queryText.match(/mine$/), res => {
-        console.log('matched *mine, ', res)
-        this.VoicesDb.find({chatId}, (err, voices) => {
-          console.log(voices)
-          if (voices.length){
-            console.log('1=>', voices)
-            voices.forEach((voice, i) => {
-              this.VoicesDb.find({fileId: voice.fileId}, (err, [voice]) => {
-                console.log('2=>', voice)
-                results.push({
-                  type: 'voice',
-                  id: i.toString(),
-                  voice_file_id: voice.fileId,
-                  // caption: voice.emojiCode,
-                  title: voice.name + voice.emojiCode
+      switch (true) {
+        case !!ifcb(queryText.match(/mine\)$/), res => {
+          console.log('matched *mine, ', res)
+          this.VoicesDb.find({chatId}, (err, voices) => {
+            console.log(voices)
+            if (voices.length){
+              console.log('1=>', voices)
+              voices.forEach((voice, i) => {
+                this.VoicesDb.find({fileId: voice.fileId}, (err, [voice]) => {
+                  console.log('2=>', voice)
+                  results.push({
+                    type: 'voice',
+                    id: i.toString(),
+                    voice_file_id: voice.fileId,
+                    // caption: voice.emojiCode,
+                    title: voice.name + voice.emojiCode
+                  })
+                  if (i==voices.length-1) {
+                    console.log(`results => ${i},${voices.length-1},${results}`)
+                    this.bot.answerInlineQuery(queryId, results)
+                  }
+                  console.log('results => ',results)
                 })
-                if (i==voices.length-1) {
-                  console.log(`results => ${i},${voices.length-1},${results}`)
-                  this.bot.answerInlineQuery(queryId, results)
-                }
-                console.log('results => ',results)
+                
               })
-              
-            })
-            console.log('results => ',results)
-            this.bot.answerInlineQuery(queryId, results)
-          }
-        })
-      })
-
-      ifcb(queryText.match(/fav$/), res => {
-        console.log('matched *fav, ', res)
-        this.usersDb.find({chatId}, (err, [{fav}]) => {
-          console.log('fav--->', fav)
-          fav.forEach( (voiceFileId, i) => {
-            this.VoicesDb.find({fileId: voiceFileId}, (err, [voice]) => {
-              console.log('Adding audio-->',voice)
-              if (voice) {
-                results.push({
-                  type: 'voice',
-                  id: i.toString(),
-                  voice_file_id: voice.fileId,
-                  // caption: voice.emojiCode,
-                  title: voice.name + voice.emojiCode
-                })
-                if (i==fav.length-1) {
-                  console.log(`results => ${i},${fav.length-1},${results}`,results)
-                  this.bot.answerInlineQuery(queryId, results)
-                }
-              }
-            })
+              // console.log('results => ',results)
+              // return this.bot.answerInlineQuery(queryId, results)
+            }
           })
-          
-        })
-      })
+        }):
+          break;
+        case !!ifcb(queryText.match(/fav\)$/), res => {
+          console.log('matched *fav, ', res)
+          this.usersDb.find({chatId}, (err, [{fav}]) => {
+            console.log('fav--->', fav)
+            fav.forEach( (voiceFileId, i) => {
+              this.VoicesDb.find({fileId: voiceFileId}, (err, [voice]) => {
+                console.log('Adding audio-->',voice)
+                if (voice) {
+                  results.push({
+                    type: 'voice',
+                    id: i.toString(),
+                    voice_file_id: voice.fileId,
+                    // caption: voice.emojiCode,
+                    title: voice.name + voice.emojiCode
+                  })
+                  if (i==fav.length-1) {
+                    console.log(`results => ${i},${fav.length-1},${results}`,results)
+                    this.bot.answerInlineQuery(queryId, results)
+                  }
+                }
+              })
+            })
+            
+          })
+        }):
+          break;
+        case !!ifcb(queryText.match(/(\w+)$/), (res) => {
+          var match = res[1];
+          console.log('queryText: ', res)
+          console.log('matched', res[1])
+          // var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
+          this.voiceDB.find({name: {
+              "$regex": new RegExp(match , 'i'),
+          }}, (err, voices) => {
+            let i = 0;
+            var results = voices.map(voice => ({
+              type:'voice',
+                    id: i++,
+                    voice_file_id: voice.fileId,
+                    title: voice.name + ' ' + voice.emojiCode,
+                    caption: emoji.emojify(voice.emojiCode)
+            }))
+  
+            this.bot.answerInlineQuery(queryId,results)
+          })
+          //searchString = searchString.split(' ').join('|');
+          //var regex = new RegExp(searchString, `i`);
+  
+          // if (voice){
+          //   console.log('voice:==>',voice)
+          //   var v = voice.getVoiceForSend();
+          //   console.log('v--->', v)
+          //   results.push(v)
+          //   console.log('Inline results: ', results)
+      
+          //   this.bot.answerInlineQuery(queryId,results)
+          // } 
+        }):
+          break;
+        default: 
+          this.bot.sendMessage(chatId,'Not recognised')
+
+      }
+      
+
+      
 
         
-      ifcb(queryText.match(/(\w+)\)$/), (res) => {
-        var match = res[1];
-        console.log('queryText: ', res)
-        console.log('matched', res[1])
-        // var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
-        this.voiceDB.find({name: {
-            "$regex": new RegExp(match , 'i'),
-        }}, (err, voices) => {
-          let i = 0;
-          var results = voices.map(voice => ({
-            type:'voice',
-                  id: i++,
-                  voice_file_id: voice.fileId,
-                  title: voice.name + ' ' + voice.emojiCode,
-                  caption: emoji.emojify(voice.emojiCode)
-          }))
-
-          this.bot.answerInlineQuery(queryId,results)
-        })
-        //searchString = searchString.split(' ').join('|');
-        //var regex = new RegExp(searchString, `i`);
-
-        // if (voice){
-        //   console.log('voice:==>',voice)
-        //   var v = voice.getVoiceForSend();
-        //   console.log('v--->', v)
-        //   results.push(v)
-        //   console.log('Inline results: ', results)
-    
-        //   this.bot.answerInlineQuery(queryId,results)
-        // } 
-      })
+      
     })
   }
 }
