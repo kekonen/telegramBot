@@ -356,7 +356,7 @@ class T {
           this.voiceDB.find({name: {
               "$regex": new RegExp(match),
           }}, (err, voices) => {
-            if (err) console.log('err->',err)
+            if (err) {console.log('err->',err);return err}
             if (voices.length){
               console.log('search results => ', voices)
               let i = 0;
