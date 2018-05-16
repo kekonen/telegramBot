@@ -312,6 +312,11 @@ class T {
       const results = [];
       console.log('inlinequery--->', inline_query)
       //ffmpeg -i input.mp3 -c:a libopus output.opus
+      //Webmtomp3
+      //ffmpeg -i videoplayback -vn -ab 128k -ar 44100 -y videoplayback.mp3
+      //ffmpeg -ss 2 -t 3.5 -i videoplayback.mp3 -acodec copy mineplatim.mp3
+      //ffmpeg -ss 7 -t 6.5 -i videoplayback.mp3 -acodec copy daydesyatku.mp3
+      //ffmpeg -ss 42 -t 3.2 -i videoplayback.mp3 -acodec copy abonent.mp3
       
       switch (true) {
         case !!ifcb(queryText.match(/mine\)$/), res => {
