@@ -18,14 +18,25 @@ class CallbackRouter {
         console.log('subsriptions created')        
     }
 
-    execute(chatId, data) {
+    async execute(chatId, data) {
+        console.log('----------------',chatId,data,this.callbackDb, '----------------------')
         console.log('1',chatId,data,this.callbackDb[chatId])
         var [functionName,context] = this.callbackDb[chatId];
         console.log('2',functionName,context)
         if (!functionName) return 0
         console.log('3')
-        return this.callbackFunctions[functionName](chatId, context, data)
+        var response = await this.callbackFunctions[functionName](chatId, context, data)
+        console.log('response:--->', response)
+        if (response[0]) {
+            console.log('Executing, response exists',  this.callbackDb, functionName, response[0])
+            this.callbackDb[chatId] = [functionName, response[0]];
+            return response[1]
+        }
+        console.log('Executing, response doesnt exist',  this.callbackDb, functionName, response[0])
+        
+        this.callbackDb[chatId] = [];
         console.log('4')
+        return response[1]
     }
 
     cancel(chatId) {
