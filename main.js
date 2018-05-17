@@ -11,11 +11,13 @@ var ffmpeg = require('fluent-ffmpeg');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const sequelize = new Sequelize('Voices', null, null, {
-  dialect: "sqlite",
-  storage: './Voices.sqlite',
-  sync: { force: true },
-});
+// const sequelize = new Sequelize('Voices', null, null, {
+//   dialect: "mysql",
+//   storage: './Voices.sqlite',
+//   sync: { force: true },
+// });
+
+const sequelize = new Sequelize('mysql://pi:raspberry@localhost');
 
 sequelize.authenticate().then(function(err) {
     console.log('Connection has been established successfully.');
