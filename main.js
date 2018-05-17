@@ -17,7 +17,7 @@ const Op = Sequelize.Op;
 //   sync: { force: true },
 // });
 
-const sequelize = new Sequelize('mysql://pi:raspberry@localhost/kek');
+const sequelize = new Sequelize('mysql://root:root@localhost/kek');
 
 sequelize.authenticate().then(function(err) {
     console.log('Connection has been established successfully.');
