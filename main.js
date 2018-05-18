@@ -12,7 +12,7 @@ var ffmpeg = require('fluent-ffmpeg');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 // const sequelize = new Sequelize('Voices', null, null, {
-//   dialect: "mysql",
+//   dialect: "sqlite",
 //   storage: './Voices.sqlite',
 //   sync: { force: true },
 // });
@@ -65,20 +65,20 @@ var Collections = sequelize.define('Collections', {
   },
 });
 
-sequelize.sync({ force: true }).then(function(err) {
+sequelize.sync({ force: false }).then(function(err) {
     console.log('It worked!');
   }, function (err) {
     console.log('An error occurred while creating the table:', err);
 });
 
-Voices.sync({force: true}).then(() => {
+Voices.sync({force: false}).then(() => {
   // Table created
   return Voices.create({
     name: 'John',
     path: 'Hancock'
   });
 });
-Voices.sync({force: true}).then(() => {
+Voices.sync({force: false}).then(() => {
   // Table created
   return Voices.findAll().then(users => {
     console.log(users)
