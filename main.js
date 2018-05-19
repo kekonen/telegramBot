@@ -560,6 +560,18 @@ class T {
                 this.bot.sendMessage(chatId, text, options)
               
               })
+            } else {
+              var text = 'You have no fav songs';
+                var options = {
+                  reply_markup: JSON.stringify({
+                    inline_keyboard: [[{
+                      text,
+                      callback_data: 'back'
+                    }]],
+                    parse_mode: 'Markdown'
+                  })
+                };
+                this.bot.sendMessage(chatId, text, options)
             }
           })
       }
