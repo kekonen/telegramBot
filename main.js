@@ -508,7 +508,7 @@ class T {
     });
 
     this.bot.on('callback_query', (msg) =>  {
-      
+      const inline_message_id = msg.id
       const chatId = msg.from.id;
       var data = msg.data;
       var answer = data.split('_');
@@ -580,7 +580,7 @@ class T {
         this.bot.sendMessage(chatId,'Lol ')
       }
     
-     
+      this.bot.answerCallbackQuery(msg.id, 'Вы выбрали: '+ msg.data, true);
       
 
 
