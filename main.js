@@ -508,69 +508,67 @@ class T {
     });
 
     this.bot.on('callback_query', function (msg) {
-      try {
-        const chatId = msg.from.id;
-        var data = msg.data;
-        var answer = data.split('_');
-        var index = answer[0];
-        var button = answer[1];
-        var page = answer[2] || 0;
-        console.log(`callback_query: data:${data}, index:${index}, button:${button}, page:${page}, `, msg);
-  
-        if (index == 0) {
-          if (button == 1){
-            console.log('this.usersDb1',this.usersDb)
-            this.usersDb.findOne({where:{chatId}})
-            .then(user => {
-              if (user){
-                var fav = JSON.parse(user.fav);
-                this.VoicesDb.findAll({where: {
-                  fileId: fav
-                }}).then(voices => {
-                  console.log('voices===>', voices);
-                  var buttons = [];
-                  var length = voices.length;
-  
-                  for (var i=page*5; i<page*5+5;i++) {
-                    var voice = voices[i];
-                    buttons.push([{
-                      text: voice.name + ' ' + voice.emojiCode,
-                      callback_data: 'song_' + voice.fileId
-                    }])
-                  }
-                  
-                  var bottom = getButtons(page, length, index)
-                  // getButtons(page, length, index)
-  
-                  // if (page>0) {
-                  //   bottom = [{
-                  //     text: '0',
-                  //     callback_data: 'song_' + voice.fileId
-                  //   }, ...bottom]
-                  // }
-                  // buttons.push(bottom)
-  
-                  var text = 'Fav Songs, page: '+page.toString();
-                  var options = {
-                    reply_markup: JSON.stringify({
-                      inline_keyboard: buttons,
-                      parse_mode: 'Markdown'
-                    })
-                  };
-                  this.bot.sendMessage(chatId, text, options)
-                
-                })
-              }
-            })
-        }
-          
-        } else if (index == 'back') {
-          this.bot.sendMessage('Lol '+button.toString())
-        }
       
-      } catch (e) {
-        console.log('Error',e)
+      const chatId = msg.from.id;
+      var data = msg.data;
+      var answer = data.split('_');
+      var index = answer[0];
+      var button = answer[1];
+      var page = answer[2] || 0;
+      console.log(`callback_query: data:${data}, index:${index}, button:${button}, page:${page}, `, msg);
+
+      if (index == 0) {
+        if (button == 1){
+          console.log('this.usersDb1',this.usersDb)
+          this.usersDb.findOne({where:{chatId}})
+          .then(user => {
+            if (user){
+              var fav = JSON.parse(user.fav);
+              this.VoicesDb.findAll({where: {
+                fileId: fav
+              }}).then(voices => {
+                console.log('voices===>', voices);
+                var buttons = [];
+                var length = voices.length;
+
+                for (var i=page*5; i<page*5+5;i++) {
+                  var voice = voices[i];
+                  buttons.push([{
+                    text: voice.name + ' ' + voice.emojiCode,
+                    callback_data: 'song_' + voice.fileId
+                  }])
+                }
+                
+                var bottom = getButtons(page, length, index)
+                // getButtons(page, length, index)
+
+                // if (page>0) {
+                //   bottom = [{
+                //     text: '0',
+                //     callback_data: 'song_' + voice.fileId
+                //   }, ...bottom]
+                // }
+                // buttons.push(bottom)
+
+                var text = 'Fav Songs, page: '+page.toString();
+                var options = {
+                  reply_markup: JSON.stringify({
+                    inline_keyboard: buttons,
+                    parse_mode: 'Markdown'
+                  })
+                };
+                this.bot.sendMessage(chatId, text, options)
+              
+              })
+            }
+          })
       }
+        
+      } else if (index == 'back') {
+        this.bot.sendMessage('Lol '+button.toString())
+      }
+    
+     
       
 
 
