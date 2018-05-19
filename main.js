@@ -507,7 +507,7 @@ class T {
       
     });
 
-    this.bot.on('callback_query', function (msg) {
+    this.bot.on('callback_query', (msg) =>  {
       
       const chatId = msg.from.id;
       var data = msg.data;
