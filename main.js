@@ -531,7 +531,7 @@ class T {
                 var buttons = [];
                 var length = voices.length;
 
-                for (var i=page*5; i<page*5+5;i++) {
+                for (var i=page*5; i<page*5+5 && i<voices.length;i++) {
                   var voice = voices[i];
                   buttons.push([{
                     text: voice.name + ' ' + voice.emojiCode,
