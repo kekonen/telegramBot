@@ -577,7 +577,7 @@ class T {
       }
         
       } else if (index == 'back') {
-        this.bot.sendMessage('Lol ')
+        this.bot.sendMessage(chatId,'Lol ')
       }
     
      
