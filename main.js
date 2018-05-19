@@ -65,22 +65,22 @@ var Collections = sequelize.define('Collections', {
   },
 });
 
-sequelize.sync({ force: true }).then(function(err) {
+sequelize.sync({ force: false }).then(function(err) {
     console.log('It worked!');
   }, function (err) {
     console.log('An error occurred while creating the table:', err);
 });
 
-Voices.sync({force: true}).then(() => {
+Voices.sync({force: false}).then(() => {
   // Table created
-  return Voices.create({
-    name: 'John',
-    path: 'Hancock'
-  });
+  // return Voices.create({
+  //   name: 'John',
+  //   path: 'Hancock'
+  // });
 
   console.log('Sync done...')
 });
-Voices.sync({force: true}).then(() => {
+Voices.sync({force: false}).then(() => {
   // Table created
   return Voices.findAll().then(users => {
     console.log(users)
@@ -475,12 +475,12 @@ class T {
       const chatId = msg.chat.id;
       console.log('Manage chatId===>', chatId)
 
-      var x = new Date();
+      var x = (new Date()).getHours();
       var questions = [
         {
           title:"`Good ${17<x || x<5?'Evening':x<12?'Morning':'Afternoon'}, please choose ...`",
           buttons: [
-              [{ text: 'My songs', callback_data: '0_1' }, { text: 'Fav', callback_data: '0_2' }],
+              [{ text: 'Fav', callback_data: '0_1' }, { text: 'My songs', callback_data: '0_2' }],
               [{ text: 'Paki', callback_data: '0_3' },     { text: 'Lox', callback_data: '0_4' }]
             ]
         }
