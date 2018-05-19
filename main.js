@@ -65,13 +65,13 @@ var Collections = sequelize.define('Collections', {
   },
 });
 
-sequelize.sync({ force: false }).then(function(err) {
+sequelize.sync({ force: true }).then(function(err) {
     console.log('It worked!');
   }, function (err) {
     console.log('An error occurred while creating the table:', err);
 });
 
-Voices.sync({force: false}).then(() => {
+Voices.sync({force: true}).then(() => {
   // Table created
   return Voices.create({
     name: 'John',
@@ -80,7 +80,7 @@ Voices.sync({force: false}).then(() => {
 
   console.log('Sync done...')
 });
-Voices.sync({force: false}).then(() => {
+Voices.sync({force: true}).then(() => {
   // Table created
   return Voices.findAll().then(users => {
     console.log(users)
