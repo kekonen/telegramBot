@@ -12,9 +12,9 @@ var ffmpeg = require('fluent-ffmpeg');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 // const sequelize = new Sequelize('Voices', null, null, {
-//   dialect: "sqlite",
+//   dialect: "mysql",
 //   storage: './Voices.sqlite',
-//   sync: { force: true },
+//   sync: { force: false },
 // });
 
 const sequelize = new Sequelize('mysql://root:root@localhost/kek');
@@ -73,10 +73,12 @@ sequelize.sync({ force: false }).then(function(err) {
 
 Voices.sync({force: false}).then(() => {
   // Table created
-  return Voices.create({
-    name: 'John',
-    path: 'Hancock'
-  });
+  // return Voices.create({
+  //   name: 'John',
+  //   path: 'Hancock'
+  // });
+
+  console.log('Sync done...')
 });
 Voices.sync({force: false}).then(() => {
   // Table created
@@ -121,6 +123,7 @@ class T {
     this.voiceDb = {};
 
     this.usersDb = Users;
+    console.log('this.usersDb',this.usersDb)
 
     this.cbr = new CallbackRouter(this);
 
@@ -347,6 +350,31 @@ class T {
   }
 
   register(){
+    var getButtons = (page, length, index) => {
+      var maxPages = Math.floor(length/5) + 1;
+      var pages =[];
+      if (page<3) {
+        pages = Array.from({ length: maxPages>=5?5:maxPages }, (v, k) => [page,(k+1).toString()]) 
+
+        // var page = Math.floor(num/5);
+
+        pages[page][1] = '('+(page+1).toString()+')';
+      } else if (page<maxPages-3) {
+        pages = [ [page, (page-2).toString()],[page, (page-1).toString()],[page, '.'+(page).toString()+'.'],[page, (page+1).toString()],[page, (page+2).toString()] ];
+      } else {
+        pages = Array.from({ length: maxPages>=5?5:maxPages }, (v, k) => [page, (k+maxPages-5).toString()])
+        pages[maxPages - page - 5][1] = '('+(page+1).toString()+')'; 
+        
+        //pages = [ (maxPages-5).toString(),(maxPages-4).toString(),'.'+(maxPages-3).toString()+'.',(maxPages-2).toString(),(maxPages-1).toString() ];
+      }
+
+      return pages.map(page => ({
+        text: page[1],
+        callback_data: index+'_'+page[0]
+      }))
+      // var numbers = [[0,1,2,3,4], [0,1,2,3,4], [0,1,2,3,4], [1,2,3,4,5], [2,3,4,5,6], [3,4,5,6,7], [3,4,5,6,7], [3,4,5,6,7]];
+    }
+
     this.bot.onText(/\/echo (.+)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
       // 'match' is the result of executing the regexp above on the text content
@@ -440,6 +468,122 @@ class T {
       }
 
       
+    });
+    
+
+    this.bot.onText(/\/manage/, (msg, match) => {
+      const chatId = msg.chat.id;
+      console.log('Manage chatId===>', chatId)
+
+      var x = (new Date()).getHours();
+      var questions = [
+        {
+          title:"`Good ${17<x || x<5?'Evening':x<12?'Morning':'Afternoon'}, please choose ...`",
+          buttons: [
+              [{ text: 'Fav', callback_data: '0_1' }, { text: 'My songs', callback_data: '0_2' }],
+              [{ text: 'Paki', callback_data: '0_3' },     { text: 'Lox', callback_data: '0_4' }]
+            ]
+        }
+      ]
+
+      try {
+        var text = eval(questions[0].title);
+        console.log(`text----->`, text);
+        var options = {
+          reply_markup: JSON.stringify({
+            inline_keyboard: questions[0].buttons,
+            parse_mode: 'Markdown'
+          })
+        };
+        console.log(`sendMessage`);
+        this.bot.sendMessage(chatId, text, options)
+        console.log(`message Sent`);
+      } catch (e) {
+        console.log('Error',e)
+      }
+
+      
+
+      
+    });
+
+    this.bot.on('callback_query', (msg) =>  {
+      const inline_message_id = msg.id
+      const chatId = msg.from.id;
+      var data = msg.data;
+      var answer = data.split('_');
+      var index = answer[0];
+      var button = answer[1];
+      var page = answer[2] || 0;
+      console.log(`callback_query: data:${data}, index:${index}, button:${button}, page:${page}, `, msg);
+
+      if (index == 0) {
+        if (button == 1){
+          console.log('this.usersDb1',this.usersDb)
+          this.usersDb.findOne({where:{chatId}})
+          .then(user => {
+            if (user){
+              var fav = JSON.parse(user.fav);
+              this.VoicesDb.findAll({where: {
+                fileId: fav
+              }}).then(voices => {
+                console.log('voices===>', voices);
+                var buttons = [];
+                var length = voices.length;
+
+                for (var i=page*5; i<page*5+5 && i<voices.length;i++) {
+                  var voice = voices[i];
+                  buttons.push([{
+                    text: voice.name + ' ' + voice.emojiCode,
+                    callback_data: 'song_' + voice.fileId
+                  }])
+                }
+                
+                var bottom = getButtons(page, length, index)
+                // getButtons(page, length, index)
+
+                // if (page>0) {
+                //   bottom = [{
+                //     text: '0',
+                //     callback_data: 'song_' + voice.fileId
+                //   }, ...bottom]
+                // }
+                // buttons.push(bottom)
+
+                var text = 'Fav Songs, page: '+page.toString();
+                var options = {
+                  reply_markup: JSON.stringify({
+                    inline_keyboard: buttons,
+                    parse_mode: 'Markdown'
+                  })
+                };
+                this.bot.sendMessage(chatId, text, options)
+              
+              })
+            } else {
+              var text = 'You have no fav songs';
+                var options = {
+                  reply_markup: JSON.stringify({
+                    inline_keyboard: [[{
+                      text,
+                      callback_data: 'back'
+                    }]],
+                    parse_mode: 'Markdown'
+                  })
+                };
+                this.bot.sendMessage(chatId, text, options)
+            }
+          })
+      }
+        
+      } else if (index == 'back') {
+        this.bot.sendMessage(chatId,'Lol ')
+      }
+    
+      this.bot.answerCallbackQuery(msg.id, 'Вы выбрали: '+ msg.data, true);
+      
+
+
     });
 
     this.bot.onText(/\/cancel/, (msg, match) => {
