@@ -4,6 +4,8 @@ const fs = require('fs');
 const Voice = require('./voice');
 var emoji = require('node-emoji');
 var Datastore = require('nedb');
+
+var CallbackHistoryDb = require('./callbackHistoryDb');
 var CallbackRouter = require('./callbackRouter');
 var rp = require('request-promise');
 
@@ -16,8 +18,23 @@ const Op = Sequelize.Op;
 //   storage: './Voices.sqlite',
 //   sync: { force: false },
 // });
+var charsets = {
+  mac: {charset:'utf8mb4', collate:'utf8mb4_unicode_ci'},
+  raspberry: {charset:'utf8', collate:'utf8_unicode_ci'}
+};
 
+var env = 'prod';
 const sequelize = new Sequelize('mysql://root:root@localhost/kek');
+
+// const sequelize = new Sequelize('kek', 'root', 'root', {
+//   host: 'localhost',
+//   dialect: 'mysql',
+//   define: {
+//     ...(charsets['raspberry']), 
+//     timestamps: true
+//   },
+//   logging:false
+// })
 
 sequelize.authenticate().then(function(err) {
     console.log('Connection has been established successfully.');
@@ -25,7 +42,7 @@ sequelize.authenticate().then(function(err) {
     console.log('Unable to connect to the database:', err);
 });
 
-var Voices = sequelize.define('Voices', {
+var Voices = sequelize.define('voices', {
   name: Sequelize.STRING,
   path: Sequelize.STRING,
   fileId: Sequelize.STRING,
@@ -37,9 +54,9 @@ var Voices = sequelize.define('Voices', {
     allowNull: false,
     autoIncrement: true
   },
-});
+},{charset: 'utf8mb4',collate: 'utf8mb4_unicode_ci'});
 
-var Users = sequelize.define('Users', {
+var Users = sequelize.define('users', {
   firstName: Sequelize.STRING,
   secondName: Sequelize.STRING,
   fav: Sequelize.STRING(685),
@@ -50,9 +67,9 @@ var Users = sequelize.define('Users', {
     allowNull: false,
     autoIncrement: true
   },
-});
+},{charset: 'utf8mb4',collate: 'utf8mb4_unicode_ci'});
 
-var Collections = sequelize.define('Collections', {
+var Collections = sequelize.define('collections', {
   firstName: Sequelize.STRING,
   secondName: Sequelize.STRING,
   fav: Sequelize.STRING(685),
@@ -126,6 +143,8 @@ class T {
     console.log('this.usersDb',this.usersDb)
 
     this.cbr = new CallbackRouter(this);
+
+    this.cbh = new CallbackHistoryDb();
 
     // this.VoicesDb.all()
     // .then(voices => {
@@ -350,30 +369,7 @@ class T {
   }
 
   register(){
-    var getButtons = (page, length, index) => {
-      var maxPages = Math.floor(length/5) + 1;
-      var pages =[];
-      if (page<3) {
-        pages = Array.from({ length: maxPages>=5?5:maxPages }, (v, k) => [page,(k+1).toString()]) 
 
-        // var page = Math.floor(num/5);
-
-        pages[page][1] = '('+(page+1).toString()+')';
-      } else if (page<maxPages-3) {
-        pages = [ [page, (page-2).toString()],[page, (page-1).toString()],[page, '.'+(page).toString()+'.'],[page, (page+1).toString()],[page, (page+2).toString()] ];
-      } else {
-        pages = Array.from({ length: maxPages>=5?5:maxPages }, (v, k) => [page, (k+maxPages-5).toString()])
-        pages[maxPages - page - 5][1] = '('+(page+1).toString()+')'; 
-        
-        //pages = [ (maxPages-5).toString(),(maxPages-4).toString(),'.'+(maxPages-3).toString()+'.',(maxPages-2).toString(),(maxPages-1).toString() ];
-      }
-
-      return pages.map(page => ({
-        text: page[1],
-        callback_data: index+'_'+page[0]
-      }))
-      // var numbers = [[0,1,2,3,4], [0,1,2,3,4], [0,1,2,3,4], [1,2,3,4,5], [2,3,4,5,6], [3,4,5,6,7], [3,4,5,6,7], [3,4,5,6,7]];
-    }
 
     this.bot.onText(/\/echo (.+)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
@@ -480,7 +476,7 @@ class T {
         {
           title:"`Good ${17<x || x<5?'Evening':x<12?'Morning':'Afternoon'}, please choose ...`",
           buttons: [
-              [{ text: 'Fav', callback_data: '0_1' }, { text: 'My songs', callback_data: '0_2' }],
+              [{ text: 'Fav', callback_data: '0_fav' }, { text: 'My songs', callback_data: '0_mine' }],
               [{ text: 'Paki', callback_data: '0_3' },     { text: 'Lox', callback_data: '0_4' }]
             ]
         }
@@ -507,6 +503,59 @@ class T {
       
     });
 
+    var getButtons = (page, length, index) => {
+      var maxPages = Math.floor(length/5) + 1;
+      if (maxPages <= 1) return []
+      var pages =[];
+      if (page<3) {
+        pages = Array.from({ length: maxPages>=5?5:maxPages }, (v, k) => [page,(k+1).toString()]) 
+
+        // var page = Math.floor(num/5);
+
+        pages[page][1] = '('+(page+1).toString()+')';
+      } else if (page<maxPages-3) {
+        pages = [ [page, (page-2).toString()],[page, (page-1).toString()],[page, '.'+(page).toString()+'.'],[page, (page+1).toString()],[page, (page+2).toString()] ];
+      } else {
+        pages = Array.from({ length: maxPages>=5?5:maxPages }, (v, k) => [page, (k+maxPages-5).toString()])
+        pages[maxPages - page - 5][1] = '('+(page+1).toString()+')'; 
+        
+        //pages = [ (maxPages-5).toString(),(maxPages-4).toString(),'.'+(maxPages-3).toString()+'.',(maxPages-2).toString(),(maxPages-1).toString() ];
+      }
+
+      return [pages.map(page => ({
+        text: page[1],
+        callback_data: index+'_'+page[0]
+      }))]
+      // var numbers = [[0,1,2,3,4], [0,1,2,3,4], [0,1,2,3,4], [1,2,3,4,5], [2,3,4,5,6], [3,4,5,6,7], [3,4,5,6,7], [3,4,5,6,7]];
+    }
+
+    var lowerMenu = (chatId) => {
+      var backButton = this.cbh.back(chatId);
+      var mainMenuButton = {
+        text: "Menu",
+        callback_data: 'menu'
+      };
+      return [...backButton, mainMenuButton]
+    }
+
+    var pageVoices = (chatId, voices, page, index) => {
+      var buttons =[];
+      var length = voices.length;
+
+      for (var i=page*5; i<page*5+5 && i<voices.length;i++) {
+        var voice = voices[i];
+        buttons.push([{
+          text: voice.name + ' ' + voice.emojiCode,
+          callback_data: 'song_' + voice.fileId
+        }])
+      }
+      
+      var pages = getButtons(page, length, index)
+      buttons.push(...pages, lowerMenu(chatId))
+
+      return buttons
+    }
+
     this.bot.on('callback_query', (msg) =>  {
       const inline_message_id = msg.id
       const chatId = msg.from.id;
@@ -517,8 +566,11 @@ class T {
       var page = answer[2] || 0;
       console.log(`callback_query: data:${data}, index:${index}, button:${button}, page:${page}, `, msg);
 
+      this.cbh.add(chatId, data);
+
+      console.log('Added,',chatId,data)
       if (index == 0) {
-        if (button == 1){
+        if (button == 'fav'){
           console.log('this.usersDb1',this.usersDb)
           this.usersDb.findOne({where:{chatId}})
           .then(user => {
@@ -528,27 +580,7 @@ class T {
                 fileId: fav
               }}).then(voices => {
                 console.log('voices===>', voices);
-                var buttons = [];
-                var length = voices.length;
-
-                for (var i=page*5; i<page*5+5 && i<voices.length;i++) {
-                  var voice = voices[i];
-                  buttons.push([{
-                    text: voice.name + ' ' + voice.emojiCode,
-                    callback_data: 'song_' + voice.fileId
-                  }])
-                }
-                
-                var bottom = getButtons(page, length, index)
-                // getButtons(page, length, index)
-
-                // if (page>0) {
-                //   bottom = [{
-                //     text: '0',
-                //     callback_data: 'song_' + voice.fileId
-                //   }, ...bottom]
-                // }
-                // buttons.push(bottom)
+                var buttons = pageVoices(chatId, voices, page, index)
 
                 var text = 'Fav Songs, page: '+page.toString();
                 var options = {
@@ -574,7 +606,100 @@ class T {
                 this.bot.sendMessage(chatId, text, options)
             }
           })
+        } else if (button == 'mine') {
+          console.log('user pressed mine button in menu')
+          var buttons = [];
+          this.VoicesDb.findAll({where:{chatId}}).then(voices => {
+            var buttons = pageVoices(chatId, voices, page, index)
+            var text = 'My Songs, page: '+page.toString();
+            var options = {
+              reply_markup: JSON.stringify({
+                inline_keyboard: buttons,
+                parse_mode: 'Markdown'
+              })
+            };
+            this.bot.sendMessage(chatId, text, options)
+          })
+            
+
+        }
+        
+      }else if (index == 'song') {
+        if (!button) throw new Error('Activated voice with no id, not good');
+        this.VoicesDb.findOne({where:{fileId: button}}).then(voice => {
+          if (!voice) throw new Error('No voice found');
+          this.usersDb.findOne({where: {chatId}}).then(user => {
+            console.log('user fav ==>,',user.fav)
+            var favs = JSON.parse(user.fav);
+            if (favs.includes(voice.fileId)) {
+              var addDelFavButton = [{text: 'Delete from fav', callback_data: `deleteFav_${voice.fileId}`}]
+            } else {
+              var addDelFavButton = [{text: 'Add to fav', callback_data: `addFav_${voice.fileId}`}]
+            }
+
+            var ownerButtons = [
+              [{text: 'Edit name', callback_data: `editName_${voice.fileId}`}, {text: 'Edit emoji', callback_data: `editName_${voice.fileId}`}],
+              [{text: 'Delete Voice', callback_data: `delete_${voice.fileId}`}]
+            ]
+            var buttons = [
+              ...(voice.chatId == chatId?ownerButtons:[]),
+              addDelFavButton
+            ]
+  
+            var text = `Voice: ${voice.name},\nemoji: ${voice.emojiCode},\nYour actions:`;
+            var options = {
+              reply_markup: JSON.stringify({
+                inline_keyboard: buttons,
+                parse_mode: 'Markdown'
+              })
+            };
+            this.bot.sendMessage(chatId, text, options)
+
+          })
+
+          
+        })
+
+      } else if (index == 'deleteFav') {
+
+      } else if (index == 'addFav') {
+
+      } else if (index == 'editName') {
+
+      } else if (index == 'editName') {
+
+      } else if (index == 'delete') { // deal to delete from all favs and packs, or make all access functions troubleshoot on empty voice/ or delete the possibility to remove audio/ but it is shit
+
+      } else if (index == 'lol') {
       }
+      else if (index == 'menu') {
+        console.log('Manue requested===>', chatId)
+        var x = (new Date()).getHours();
+        var questions = [
+          {
+            title:"`Good ${17<x || x<5?'Evening':x<12?'Morning':'Afternoon'}, please choose ...`",
+            buttons: [
+                [{ text: 'Fav', callback_data: '0_fav' }, { text: 'My songs', callback_data: '0_mine' }],
+                [{ text: 'Paki', callback_data: '0_3' },     { text: 'Lox', callback_data: '0_4' }]
+              ]
+          }
+        ]
+
+        try {
+          var text = eval(questions[0].title);
+          console.log(`text----->`, text);
+          var options = {
+            reply_markup: JSON.stringify({
+              inline_keyboard: questions[0].buttons,
+              parse_mode: 'Markdown'
+            })
+          };
+          console.log(`sendMessage`);
+          this.bot.sendMessage(chatId, text, options)
+          console.log(`message Sent`);
+        } catch (e) {
+          console.log('Error',e)
+        }
         
       } else if (index == 'back') {
         this.bot.sendMessage(chatId,'Lol ')
@@ -662,10 +787,15 @@ class T {
               console.log('update start--')
               var userFavs = JSON.parse(user.fav)
               console.log('userFavs', userFavs,fileId)
-              userFavs.push(fileId)
-              console.log('userFavs start--',userFavs)
-              user.update({fav:JSON.stringify(userFavs)});
-              console.log('update done--')
+              if (!userFavs.includes(fileId)){
+                userFavs.push(fileId)
+                console.log('userFavs start--',userFavs)
+                user.update({fav:JSON.stringify(userFavs)});
+                console.log('update done--')
+              } else {
+                console.log('/fav already exists',userFavs)
+              }
+              
             } else {
               console.log('insert start--')
               this.usersDb.create({chatId, fav: JSON.stringify([fileId])});
