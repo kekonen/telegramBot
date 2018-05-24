@@ -327,7 +327,7 @@ class T {
   }
 
   createUser(msg){
-    var [firstName, secondName, fav, chatId] = [msg.from.first_name, msg.from.second_name, {}, msg.from.id]
+    var [firstName, secondName, fav, chatId] = [msg.from.first_name, msg.from.second_name, JSON.stringify([]), msg.from.id]
     return this.usersDb.create({ firstName, secondName, fav, chatId })
      
   }
