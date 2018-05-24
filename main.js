@@ -202,7 +202,8 @@ class T {
           var voice = new Voice({name, emojiCode, VoicesDB:this.VoicesDb, chatId, fileId: file_id, callback: voice => {
             console.log('--dqdqwdq----->',name,file_id,context,voice, voice.dbEntry)
             this.voiceDb[name] = voice.dbEntry;
-            this.emojiDb[emojiCode] = voice.dbEntry;
+            if (!this.emojiDb[emojiCode]) this.emojiDb[emojiCode] =[]
+            this.emojiDb[emojiCode].push(voice.dbEntry);
             this.bot.sendMessage(chatId, `Voice added!`);
           }});
           // console.log('--dqdqwdq----->',name,file_id,context,voice, voice.dbEntry)
@@ -244,7 +245,8 @@ class T {
           console.log('voice=>', context.voice)
           context.voice.update({fileId,name, emojiCode}).then(m => {console.log('updated', m)});
           this.voiceDb[name] = context.voice;
-          this.emojiDb[emojiCode] = context.voice;
+          if (!this.emojiDb[emojiCode]) this.emojiDb[emojiCode] = []
+          this.emojiDb[emojiCode].push(context.voice);
           this.bot.sendMessage(chatId, 'Audio Added')
           return [0, 0]
           // , (err, [voice]) => {
@@ -258,32 +260,64 @@ class T {
           //this.cbr.subscribe(chatId, 'registerIncomingAudio', context)
         }
       })
-      // , (err, voices) => {
-      //   console.log('voices===>', voices)
-      //   if (!voices.length) {
-      //     this.VoicesDb.find({fileId}, (err, [voice]) => {
-      //       //this.VoicesDb.find({fileId:}, (err, voices) => {console.log(voices)})
-      //       if (voice) {
-      //         console.log('voice=>', voice)
-      //         this.VoicesDb.update({fileId}, {name, emojiCode}, {}, (err,m) => {console.log('updated', m , err)})
-      //         this.voiceDb[name] = voice;
-      //         this.emojiDb[emojiCode] = voice;
-      //         this.bot.sendMessage(chatId, 'Audio Added')
-      //       } else {
-      //         this.bot.sendMessage(chatId, 'What the Heck')
-              
-      //       }
-            
-      //     })
-      //   } else {
-      //     voice.sendMessage(chatId, 'Voice With this name Exists, please supply again')
-      //     return [1, 0]
-      //     //this.cbr.subscribe(chatId, 'registerIncomingAudio', context)
-      //   }
-      // })
+    })
 
-      //var voice = new Voice({name, emojiCode, VoicesDB:this.VoicesDb, chatId, fileId: file_id});
-      // this.createVoice(chatId, `audios/${audio.audio.file_id}.opus`, name, emojiId, l
+    this.cbr.registerFunction('editName', (chatId, context, [newName]) => {
+       
+      var {fileId} = context;
+      console.log('plz fileId ->',fileId)
+      return this.VoicesDb.findOne({where:{fileId}}).then(voice => {
+        console.log('voiceEntryCheck===>', voice)
+        if (voice) {
+          //console.log('voice=>', context.voice)
+          //context.voice.update({fileId,name, emojiCode}).then(m => {console.log('updated', m)});
+          delete this.voiceDb[voice.name]
+          
+          voice.update({name: newName})
+          this.voiceDb[newName] = voice;
+
+          this.bot.sendMessage(chatId, 'VoiceEdited')
+          return [0, 0]
+          // , (err, [voice]) => {
+          //   //this.VoicesDb.find({fileId:}, (err, voices) => {console.log(voices)})
+            
+            
+          // })
+        } else {
+          this.bot.sendMessage(chatId, 'Error')
+          return [context, 0]
+          //this.cbr.subscribe(chatId, 'registerIncomingAudio', context)
+        }
+      })
+
+      
+    })
+
+    this.cbr.registerFunction('editEmoji', (chatId, context, [newEmoji]) => {
+       
+      var {fileId} = context;
+      console.log('plz fileId ->',fileId)
+      return this.VoicesDb.findOne({where:{fileId}}).then(voice => {
+        console.log('voiceEntryCheck===>', voice)
+        if (voice) {
+          //console.log('voice=>', context.voice)
+          //context.voice.update({fileId,name, emojiCode}).then(m => {console.log('updated', m)});
+          voice.update({emojiCode: newEmoji})
+
+          this.bot.sendMessage(chatId, 'EmojiEdited')
+          return [0, 0]
+          // , (err, [voice]) => {
+          //   //this.VoicesDb.find({fileId:}, (err, voices) => {console.log(voices)})
+            
+            
+          // })
+        } else {
+          this.bot.sendMessage(chatId, 'Error')
+          return [context, 0]
+          //this.cbr.subscribe(chatId, 'registerIncomingAudio', context)
+        }
+      })
+
       
     })
     
@@ -442,7 +476,7 @@ class T {
       console.log('msg: ',emojiId)
       
 
-      this.cbr.subscribe(chatId,'registerMp3File',{name, emojiId})
+      //this.cbr.subscribe(chatId,'registerMp3File',{name, emojiId})
       this.bot.sendMessage(chatId, `Thank you, please send your mp3 file...${emojiId}`);
       //for (let i=0;i<emojiId.length;i++) console.log(emojiId,emojiId[i]);
 
@@ -453,11 +487,24 @@ class T {
  
     });
 
-    this.bot.onText(/^([^/].+) (.+)\)$/, (msg, match) => {
+    this.bot.onText(/^([^/][\w\d\s]+) (.+)\)$/, (msg, match) => {
       const chatId = msg.chat.id;
       console.log('chatId===>', chatId)
       
       if (!this.cbr.execute(chatId, [match[1], match[2]])) {
+        console.log('registered -->', match);
+      } else {
+        this.bot.sendMessage(chatId, 'wtf?');
+      }
+
+      
+    });
+
+    this.bot.onText(/^([^/].+)\)\)$/, (msg, match) => {
+      const chatId = msg.chat.id;
+      console.log('chatId===>', chatId)
+      
+      if (!this.cbr.execute(chatId, [match[1]])) {
         console.log('registered -->', match);
       } else {
         this.bot.sendMessage(chatId, 'wtf?');
@@ -476,8 +523,8 @@ class T {
         {
           title:"`Good ${17<x || x<5?'Evening':x<12?'Morning':'Afternoon'}, please choose ...`",
           buttons: [
-            [{ text: 'Fav', callback_data:  JSON.stringify({index: '0', button: 'fav'}) }, { text: 'My songs', callback_data: JSON.stringify({index: '0', button: 'mine'}) }],
-            [{ text: 'Paki', callback_data:  JSON.stringify({index: '0', button: 'lol'})},     { text: 'Lox', callback_data: JSON.stringify({index: '0', button: 'lol'}) }]
+            [{ text: 'Fav', callback_data:  JSON.stringify({index: 'main', button: 'fav'}) }, { text: 'My songs', callback_data: JSON.stringify({index: 'main', button: 'mine'}) }],
+            [{ text: 'Paki', callback_data:  JSON.stringify({index: 'main', button: 'lol'})},     { text: 'Lox', callback_data: JSON.stringify({index: 'main', button: 'lol'}) }]
             ]
         }
       ]
@@ -530,7 +577,7 @@ class T {
     }
 
     var lowerMenu = (chatId) => {
-      var backButton = this.cbh.back(chatId);
+      var backButton = this.cbh.back(chatId, {});
       var mainMenuButton = {
         text: "Menu",
         callback_data: JSON.stringify({index: 'menu'})
@@ -539,7 +586,7 @@ class T {
     }
 
     var lowerMenuEnhanced = (buttons, chatId) => {
-      var backButton = this.cbh.back(chatId);
+      var backButton = this.cbh.back(chatId, {});
       var mainMenuButton = {
         text: "Menu",
         callback_data: JSON.stringify({index: 'menu'})
@@ -549,7 +596,7 @@ class T {
     }
 
     var addBackButton = (buttons, chatId) => {
-      var backButton = this.cbh.back(chatId);
+      var backButton = this.cbh.back(chatId, {});
       buttons.push(backButton);
       return buttons;
     }
@@ -603,7 +650,7 @@ class T {
       this.cbh.add(chatId, data);
 
       console.log('Added,',chatId,data)
-      if (index == 0) {
+      if (index == 'main') {
         if (button == 'fav'){
           console.log('this.usersDb1',this.usersDb)
           this.usersDb.findOne({where:{chatId}})
@@ -672,7 +719,7 @@ class T {
             }
 
             var ownerButtons = [
-              [{text: 'Edit name', callback_data: `editName_${voice.fileId}`}, {text: 'Edit emoji', callback_data: JSON.stringify({index: 'editName', fileId: voice.fileId})}],
+              [{text: 'Edit name', callback_data: JSON.stringify({index: 'editName', fileId: voice.fileId}) }, {text: 'Edit emoji', callback_data: JSON.stringify({index: 'editEmoji', fileId: voice.fileId})}],
               [{text: 'Delete Voice', callback_data: JSON.stringify({index: 'delete', fileId: voice.fileId})}]
             ]
             var buttons = [
@@ -695,14 +742,106 @@ class T {
         })
 
       } else if (index == 'deleteFav') {
+        this.usersDb.findOne({where:{chatId}})
+          .then(user => {
+            if (user && fileId){
+              var fav = JSON.parse(user.fav);
+              if (fav) {
+                var ind = fav.indexOf(fileId);
+                if (ind != -1) {
+                  fav = [...fav.slice(0,ind), ...fav.slice(ind+1)]
+                  user.update({fav:JSON.stringify(fav)});
+                  console.log('1',fav)
+
+                  var buttons = [];
+                  buttons = lowerMenuEnhanced(buttons, chatId);
+                  console.log('2',buttons)
+
+                  var backListButton = this.cbh.back(chatId, {switchKey:'lastNormal'});
+                  console.log('3',backListButton)
+                  backListButton[0].text = 'Back to voice list';
+                  console.log('4',backListButton)
+                  buttons.push(backListButton)
+                  console.log('5',buttons)
+
+                  var text = `Deleted from Fav`;
+                  var options = {
+                    reply_markup: JSON.stringify({
+                      inline_keyboard: buttons,
+                      parse_mode: 'Markdown'
+                    })
+                  };
+                  sendMessageOrEdit(chatId, text, options, toEdit) //, toEdit
+                }
+              }
+            }
+          })
 
       } else if (index == 'addFav') {
+        this.usersDb.findOne({where:{chatId}})
+          .then(user => {
+            if (user && fileId){
+              var fav = JSON.parse(user.fav);
+              if (fav) {
+                var ind = fav.indexOf(fileId);
+                if (ind == -1) {
+                  fav.push(fileId)
+                  user.update({fav:JSON.stringify(fav)});
 
-      } else if (index == 'editName') {
+                  var buttons = lowerMenuEnhanced([], chatId);
 
+                  var backListButton = this.cbh.back(chatId, {switchKey:'lastNormal'});
+                  backListButton[0].text = 'Back to voice list';
+                  buttons.push(backListButton)
+                  
+                  var text = `Added to Fav`;
+                  var options = {
+                    reply_markup: JSON.stringify({
+                      inline_keyboard: buttons,
+                      parse_mode: 'Markdown'
+                    })
+                  };
+                  sendMessageOrEdit(chatId, text, options, toEdit) //, toEdit
+                }
+              }
+            }
+          })
       } else if (index == 'editName') {
+        this.cbr.subscribe(chatId,'editName',{fileId})
+
+        var text = `Please send the new name followed by two brackets: new name))`;
+        sendMessageOrEdit(chatId, text, {}, toEdit)
+
+      } else if (index == 'editEmoji') {
+        this.cbr.subscribe(chatId,'editEmoji',{fileId})
+
+        var text = `Please send the new emoji followed by two brackets: 😛))`;
+        sendMessageOrEdit(chatId, text, {}, toEdit)
 
       } else if (index == 'delete') { // deal to delete from all favs and packs, or make all access functions troubleshoot on empty voice/ or delete the possibility to remove audio/ but it is shit
+        this.VoicesDb.findOne({where:{fileId}})
+          .then(voice => {
+            if (voice && voice.chatId == chatId){
+              delete this.voiceDb[voice.name];
+
+              voice.destroy();
+
+              var buttons = lowerMenuEnhanced([], chatId);
+
+              var [backListButton] = this.cbh.back(chatId, {switchKey:'lastNormal'});
+              
+              buttons[0][0] = backListButton;
+
+              var text = `Voice deleted`;
+                  var options = {
+                    reply_markup: JSON.stringify({
+                      inline_keyboard: buttons,
+                      parse_mode: 'Markdown'
+                    })
+                  };
+                  sendMessageOrEdit(chatId, text, options, toEdit) //, toEdit
+            }
+          })
 
       } else if (index == 'lol') {
       }
@@ -713,8 +852,8 @@ class T {
           {
             title:"`Good ${17<x || x<5?'Evening':x<12?'Morning':'Afternoon'}, please choose ...`",
             buttons: [
-                [{ text: 'Fav', callback_data:  JSON.stringify({index: '0', button: 'fav'}) }, { text: 'My songs', callback_data: JSON.stringify({index: '0', button: 'mine'}) }],
-                [{ text: 'Paki', callback_data:  JSON.stringify({index: '0', button: 'lol'})},     { text: 'Lox', callback_data: JSON.stringify({index: '0', button: 'lol'}) }]
+                [{ text: 'Fav', callback_data:  JSON.stringify({index: 'main', button: 'fav'}) }, { text: 'My songs', callback_data: JSON.stringify({index: 'main', button: 'mine'}) }],
+                [{ text: 'Paki', callback_data:  JSON.stringify({index: 'main', button: 'lol'})},     { text: 'Lox', callback_data: JSON.stringify({index: 'main', button: 'lol'}) }]
               ]
           }
         ]
@@ -739,7 +878,7 @@ class T {
         this.bot.sendMessage(chatId,'Lol ')
       }
     
-      this.bot.answerCallbackQuery(msg.id, 'Вы выбрали: '+ msg.data, true);
+      this.bot.answerCallbackQuery(msg.id);
       
 
 
@@ -775,7 +914,7 @@ class T {
                 console.log('lol1=>', voice)
                 this.cbr.subscribe(chatId, 'registerIncomingAudio', {voice})
                 console.log('lol2=>')
-                this.bot.sendVoice(chatId, voice.fileId, {caption: 'Please supply name and emoji'})
+                this.bot.sendVoice(chatId, voice.fileId, {caption: 'Please supply name and emoji followed by one bracket: My new voice name 🤓)'})
                 console.log('lol3=>')
                 // console.log('insert done--')
                 // this.usersDb.find({chatId}, (err, res) => {
@@ -843,7 +982,7 @@ class T {
           // add to favorites
         } else {
           this.cbr.subscribe(chatId,'registerIncomingVoice', {voiceMsg})
-          this.bot.sendMessage(chatId, 'Voice received, please supply name and emoji');
+          this.bot.sendMessage(chatId, 'Voice received, please supply name and emoji followed by one bracket: My new voice name 🤓)');
           //this.bot.sendMessage(voice.from.id, 'Voice not exist');          
         }
       })
