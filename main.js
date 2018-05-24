@@ -314,10 +314,22 @@ class T {
     //   console.log(`Example app listening on port ${this.port}!`);
     // });
 
+    // firstName: Sequelize.STRING,
+    // secondName: Sequelize.STRING,
+    // fav: Sequelize.STRING(685),
+    // chatId: Sequelize.STRING,
+    // id: {
+    //   type: Sequelize.INTEGER,
+    //   primaryKey: true,
+    //   allowNull: false,
+    //   autoIncrement: true
+    // },
   }
 
   createUser(msg){
-
+    var [firstName, secondName, fav, chatId] = [msg.from.first_name, msg.from.second_name, {}, msg.from.id]
+    return this.usersDb.create({ firstName, secondName, fav, chatId })
+     
   }
 
   createVoice(chatId, path, callback){
