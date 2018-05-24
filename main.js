@@ -703,7 +703,7 @@ class T {
               };
               sendMessageOrEdit(chatId, text, options) //, toEdit
             } else {
-              var buttons = lowerMenu(chatId);
+              var buttons = [lowerMenu(chatId)];
               var text = `No voices in fav or user haven't uploaded yet`
               var options = {
                 reply_markup: JSON.stringify({
