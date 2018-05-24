@@ -685,7 +685,7 @@ class T {
             }
 
             var ownerButtons = [
-              [{text: 'Edit name', callback_data: JSON.stringify({index: 'editName', fileId: voice.fileId}) }, {text: 'Edit emoji', callback_data: JSON.stringify({index: 'editEmoji', fileId: voice.fileId})}],
+              [{text: 'Edit name', callback_data: JSON.stringify({index: 'editName', fileId: voice.fileId}) }],
               [{text: 'Delete Voice', callback_data: JSON.stringify({index: 'delete', fileId: voice.fileId})}]
             ]
             var buttons = [
