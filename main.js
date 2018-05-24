@@ -316,6 +316,10 @@ class T {
 
   }
 
+  createUser(msg){
+
+  }
+
   createVoice(chatId, path, callback){
     console.log('Creating voice')
 
@@ -676,7 +680,8 @@ class T {
         this.VoicesDb.findOne({where:{fileId}}).then(voice => {
           if (!voice) throw new Error('No voice found');
           this.usersDb.findOne({where: {chatId}}).then(user => {
-            if (user) {
+
+            var continuee = (user) => {
               //console.log('user fav ==>,',user.fav)
               var favs = JSON.parse(user.fav);
               var addDelFavButton =[];
@@ -706,16 +711,15 @@ class T {
                 })
               };
               sendMessageOrEdit(chatId, text, options) //, toEdit
+            }
+
+            if (!user) {
+              this.createUser(msg).then(user => {
+                continuee(user)
+              })
+
             } else {
-              var buttons = [lowerMenu(chatId)];
-              var text = `No voices in fav or user haven't uploaded yet`
-              var options = {
-                reply_markup: JSON.stringify({
-                  inline_keyboard: buttons,
-                  parse_mode: 'Markdown'
-                })
-              };
-              sendMessageOrEdit(chatId, text, options) //, toEdit
+              continuee(user)
             }
             
 
