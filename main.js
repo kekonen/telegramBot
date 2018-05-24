@@ -14,7 +14,7 @@ var ffmpeg = require('fluent-ffmpeg');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 // const sequelize = new Sequelize('Voices', null, null, {
-//   dialect: "mysql",
+//   dialect: "sqlite",
 //   storage: './Voices.sqlite',
 //   sync: { force: false },
 // });
@@ -476,8 +476,8 @@ class T {
         {
           title:"`Good ${17<x || x<5?'Evening':x<12?'Morning':'Afternoon'}, please choose ...`",
           buttons: [
-              [{ text: 'Fav', callback_data: '0_fav' }, { text: 'My songs', callback_data: '0_mine' }],
-              [{ text: 'Paki', callback_data: '0_3' },     { text: 'Lox', callback_data: '0_4' }]
+            [{ text: 'Fav', callback_data:  JSON.stringify({index: '0', button: 'fav'}) }, { text: 'My songs', callback_data: JSON.stringify({index: '0', button: 'mine'}) }],
+            [{ text: 'Paki', callback_data:  JSON.stringify({index: '0', button: 'lol'})},     { text: 'Lox', callback_data: JSON.stringify({index: '0', button: 'lol'}) }]
             ]
         }
       ]
@@ -524,7 +524,7 @@ class T {
 
       return [pages.map(page => ({
         text: page[1],
-        callback_data: index+'_'+page[0]
+        callback_data: JSON.stringify({index, page: page[0]})
       }))]
       // var numbers = [[0,1,2,3,4], [0,1,2,3,4], [0,1,2,3,4], [1,2,3,4,5], [2,3,4,5,6], [3,4,5,6,7], [3,4,5,6,7], [3,4,5,6,7]];
     }
@@ -533,9 +533,25 @@ class T {
       var backButton = this.cbh.back(chatId);
       var mainMenuButton = {
         text: "Menu",
-        callback_data: 'menu'
+        callback_data: JSON.stringify({index: 'menu'})
       };
       return [...backButton, mainMenuButton]
+    }
+
+    var lowerMenuEnhanced = (buttons, chatId) => {
+      var backButton = this.cbh.back(chatId);
+      var mainMenuButton = {
+        text: "Menu",
+        callback_data: JSON.stringify({index: 'menu'})
+      };
+      buttons.push([...backButton, mainMenuButton])
+      return buttons
+    }
+
+    var addBackButton = (buttons, chatId) => {
+      var backButton = this.cbh.back(chatId);
+      buttons.push(backButton);
+      return buttons;
     }
 
     var pageVoices = (chatId, voices, page, index) => {
@@ -546,24 +562,42 @@ class T {
         var voice = voices[i];
         buttons.push([{
           text: voice.name + ' ' + voice.emojiCode,
-          callback_data: 'song_' + voice.fileId
+          callback_data: JSON.stringify({index: 'song', fileId: voice.fileId})
         }])
       }
       
       var pages = getButtons(page, length, index)
-      buttons.push(...pages, lowerMenu(chatId))
+      // buttons.push(...pages, lowerMenu(chatId))
+      buttons.push(...pages)
+      buttons = lowerMenuEnhanced(buttons, chatId)
 
       return buttons
+    }
+
+    var sendMessageOrEdit = (chatId, text, options, toEdit) =>{
+      if (toEdit) {
+        return this.bot.editMessageText(text, Object.assign(options, {
+          chat_id: chatId,
+          message_id: toEdit,
+        }));
+
+      } else {
+        return this.bot.sendMessage(chatId, text, options)
+      }
     }
 
     this.bot.on('callback_query', (msg) =>  {
       const inline_message_id = msg.id
       const chatId = msg.from.id;
       var data = msg.data;
-      var answer = data.split('_');
-      var index = answer[0];
-      var button = answer[1];
-      var page = answer[2] || 0;
+      var answer = JSON.parse(data)
+      // var answer = data.split('_');
+      // var index = answer[0];
+      // var button = answer[1];
+      // var page = answer[2] || 0;
+      var { index, button, page, fileId, toEdit } = answer;
+      if (!page) page = 0;
+      if (!toEdit) toEdit = msg.message.message_id;
       console.log(`callback_query: data:${data}, index:${index}, button:${button}, page:${page}, `, msg);
 
       this.cbh.add(chatId, data);
@@ -589,21 +623,21 @@ class T {
                     parse_mode: 'Markdown'
                   })
                 };
-                this.bot.sendMessage(chatId, text, options)
+                sendMessageOrEdit(chatId, text, options, toEdit)
               
               })
             } else {
-              var text = 'You have no fav songs';
+              var text = 'You have no fav songs, probably u are not in sys';
                 var options = {
                   reply_markup: JSON.stringify({
                     inline_keyboard: [[{
                       text,
-                      callback_data: 'back'
+                      callback_data: JSON.stringify({index: 'menu'})
                     }]],
                     parse_mode: 'Markdown'
                   })
                 };
-                this.bot.sendMessage(chatId, text, options)
+                sendMessageOrEdit(chatId, text, options, toEdit)
             }
           })
         } else if (button == 'mine') {
@@ -618,28 +652,28 @@ class T {
                 parse_mode: 'Markdown'
               })
             };
-            this.bot.sendMessage(chatId, text, options)
+            sendMessageOrEdit(chatId, text, options, toEdit)
           })
             
 
         }
         
       }else if (index == 'song') {
-        if (!button) throw new Error('Activated voice with no id, not good');
-        this.VoicesDb.findOne({where:{fileId: button}}).then(voice => {
+        if (!fileId) throw new Error('Activated voice with no id, not good');
+        this.VoicesDb.findOne({where:{fileId}}).then(voice => {
           if (!voice) throw new Error('No voice found');
           this.usersDb.findOne({where: {chatId}}).then(user => {
             console.log('user fav ==>,',user.fav)
             var favs = JSON.parse(user.fav);
             if (favs.includes(voice.fileId)) {
-              var addDelFavButton = [{text: 'Delete from fav', callback_data: `deleteFav_${voice.fileId}`}]
+              var addDelFavButton = [{text: 'Delete from fav', callback_data: JSON.stringify({index: 'deleteFav', fileId: voice.fileId})}]
             } else {
-              var addDelFavButton = [{text: 'Add to fav', callback_data: `addFav_${voice.fileId}`}]
+              var addDelFavButton = [{text: 'Add to fav', callback_data: JSON.stringify({index: 'addFav', fileId: voice.fileId})}]
             }
 
             var ownerButtons = [
-              [{text: 'Edit name', callback_data: `editName_${voice.fileId}`}, {text: 'Edit emoji', callback_data: `editName_${voice.fileId}`}],
-              [{text: 'Delete Voice', callback_data: `delete_${voice.fileId}`}]
+              [{text: 'Edit name', callback_data: `editName_${voice.fileId}`}, {text: 'Edit emoji', callback_data: JSON.stringify({index: 'editName', fileId: voice.fileId})}],
+              [{text: 'Delete Voice', callback_data: JSON.stringify({index: 'delete', fileId: voice.fileId})}]
             ]
             var buttons = [
               ...(voice.chatId == chatId?ownerButtons:[]),
@@ -653,7 +687,7 @@ class T {
                 parse_mode: 'Markdown'
               })
             };
-            this.bot.sendMessage(chatId, text, options)
+            sendMessageOrEdit(chatId, text, options) //, toEdit
 
           })
 
@@ -679,8 +713,8 @@ class T {
           {
             title:"`Good ${17<x || x<5?'Evening':x<12?'Morning':'Afternoon'}, please choose ...`",
             buttons: [
-                [{ text: 'Fav', callback_data: '0_fav' }, { text: 'My songs', callback_data: '0_mine' }],
-                [{ text: 'Paki', callback_data: '0_3' },     { text: 'Lox', callback_data: '0_4' }]
+                [{ text: 'Fav', callback_data:  JSON.stringify({index: '0', button: 'fav'}) }, { text: 'My songs', callback_data: JSON.stringify({index: '0', button: 'mine'}) }],
+                [{ text: 'Paki', callback_data:  JSON.stringify({index: '0', button: 'lol'})},     { text: 'Lox', callback_data: JSON.stringify({index: '0', button: 'lol'}) }]
               ]
           }
         ]
@@ -695,7 +729,7 @@ class T {
             })
           };
           console.log(`sendMessage`);
-          this.bot.sendMessage(chatId, text, options)
+          sendMessageOrEdit(chatId, text, options, toEdit)
           console.log(`message Sent`);
         } catch (e) {
           console.log('Error',e)
