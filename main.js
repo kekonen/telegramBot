@@ -2,7 +2,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const Voice = require('./voice');
-var emoji = require('node-emoji');
 var Datastore = require('nedb');
 
 var CallbackHistoryDb = require('./callbackHistoryDb');
@@ -47,7 +46,6 @@ var Voices = sequelize.define('voices', {
   path: Sequelize.STRING,
   fileId: Sequelize.STRING,
   chatId: Sequelize.STRING,
-  emojiCode: Sequelize.STRING,
   id: {
     type: Sequelize.INTEGER,
     primaryKey: true,
@@ -134,7 +132,7 @@ class T {
     this.prop= 'kek';
 
     // this.emojiDb = 
-    this.emojiDb = Object.assign({}, ...JSON.parse(fs.readFileSync('emojiDbEmpty.json', 'utf8')).map(emoji => {var plh={};plh[emoji]=[];return plh}));
+    //this.emojiDb = Object.assign({}, ...JSON.parse(fs.readFileSync('emojiDbEmpty.json', 'utf8')).map(emoji => {var plh={};plh[emoji]=[];return plh}));
 
     this.VoicesDb = Voices;
     this.voiceDb = {};
@@ -193,17 +191,15 @@ class T {
     //   return [0, 0]
     // })
     
-    this.cbr.registerFunction('registerIncomingVoice', (chatId, context, [name, emojiCode]) => {
+    this.cbr.registerFunction('registerIncomingVoice', (chatId, context, [name]) => {
       console.log('rregistering incoming voice ->',chatId,context)
       var {file_id} = context.voiceMsg.voice;
-      return this.VoicesDb.findOne({where:{name, emojiCode}}).then(voiceEntry => {
+      return this.VoicesDb.findOne({where:{name}}).then(voiceEntry => {
         console.log('voice Sequelize===>', voiceEntry)
         if (!voiceEntry) {
-          var voice = new Voice({name, emojiCode, VoicesDB:this.VoicesDb, chatId, fileId: file_id, callback: voice => {
+          var voice = new Voice({name, VoicesDB:this.VoicesDb, chatId, fileId: file_id, callback: voice => {
             console.log('--dqdqwdq----->',name,file_id,context,voice, voice.dbEntry)
             this.voiceDb[name] = voice.dbEntry;
-            if (!this.emojiDb[emojiCode]) this.emojiDb[emojiCode] =[]
-            this.emojiDb[emojiCode].push(voice.dbEntry);
             this.bot.sendMessage(chatId, `Voice added!`);
           }});
           // console.log('--dqdqwdq----->',name,file_id,context,voice, voice.dbEntry)
@@ -235,18 +231,16 @@ class T {
       return [0, 0]
     })
 
-    this.cbr.registerFunction('registerIncomingAudio', (chatId, context, [name, emojiCode]) => {
+    this.cbr.registerFunction('registerIncomingAudio', (chatId, context, [name]) => {
       console.log('rregistering incoming audio ->',chatId,context)
       var {fileId} = context.voice;
       console.log('plz fileId ->',fileId)
-      return this.VoicesDb.findOne({where:{name, emojiCode}}).then(voiceEntryCheck => {
+      return this.VoicesDb.findOne({where:{name}}).then(voiceEntryCheck => {
         console.log('voiceEntryCheck===>', voiceEntryCheck)
         if (!voiceEntryCheck) {
           console.log('voice=>', context.voice)
-          context.voice.update({fileId,name, emojiCode}).then(m => {console.log('updated', m)});
+          context.voice.update({fileId,name}).then(m => {console.log('updated', m)});
           this.voiceDb[name] = context.voice;
-          if (!this.emojiDb[emojiCode]) this.emojiDb[emojiCode] = []
-          this.emojiDb[emojiCode].push(context.voice);
           this.bot.sendMessage(chatId, 'Audio Added')
           return [0, 0]
           // , (err, [voice]) => {
@@ -293,33 +287,7 @@ class T {
       
     })
 
-    this.cbr.registerFunction('editEmoji', (chatId, context, [newEmoji]) => {
-       
-      var {fileId} = context;
-      console.log('plz fileId ->',fileId)
-      return this.VoicesDb.findOne({where:{fileId}}).then(voice => {
-        console.log('voiceEntryCheck===>', voice)
-        if (voice) {
-          //console.log('voice=>', context.voice)
-          //context.voice.update({fileId,name, emojiCode}).then(m => {console.log('updated', m)});
-          voice.update({emojiCode: newEmoji})
 
-          this.bot.sendMessage(chatId, 'EmojiEdited')
-          return [0, 0]
-          // , (err, [voice]) => {
-          //   //this.VoicesDb.find({fileId:}, (err, voices) => {console.log(voices)})
-            
-            
-          // })
-        } else {
-          this.bot.sendMessage(chatId, 'Error')
-          return [context, 0]
-          //this.cbr.subscribe(chatId, 'registerIncomingAudio', context)
-        }
-      })
-
-      
-    })
     
     //console.log(this.emojiDb);
     
@@ -413,7 +381,7 @@ class T {
       const chatId = msg.chat.id;
       const resp = match[1]; // the captured "whatever"
     
-      console.log(`message: ${resp}, ${emoji.which(resp)}`);
+      console.log(`message: ${resp}}`);
     
       // send back the matched "whatever" to the chat
       this.bot.sendMessage(chatId, chatId+' -> '+resp);
@@ -442,8 +410,8 @@ class T {
       //console.log(`message: ${resp}, ${emoji.which(resp)}`);
     
       // send back the matched "whatever" to the chat
-      console.log('SendVoice--->', chatId, voice.path, voice.emojiCode,voice.fileId)
-      this.bot.sendVoice(chatId, voice.fileId?voice.fileId:voice.path, {caption: voice.emojiCode})
+      console.log('SendVoice--->', chatId, voice.path,voice.fileId)
+      this.bot.sendVoice(chatId, voice.fileId?voice.fileId:voice.path, {caption: 'sosi'})
       // .then(answer => {
       //   var fileId = answer.voice.file_id;
       //   voice.setFileId(fileId);
@@ -464,20 +432,18 @@ class T {
 
 
 
-    this.bot.onText(/\/reg (.+) (.+)\)/, (msg, match) => {
+    this.bot.onText(/\/reg (.+)\)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
       // 'match' is the result of executing the regexp above on the text content
       // of the message
       console.log('kek')
       const chatId = msg.chat.id;
       const name = match[1]; // the captured "whatever"
-      const emojiId = match[2];
       //for (let i=0;i<emojiId.length;i++) console.log(emojiId,emojiId[i]);
-      console.log('msg: ',emojiId)
       
 
       //this.cbr.subscribe(chatId,'registerMp3File',{name, emojiId})
-      this.bot.sendMessage(chatId, `Thank you, please send your mp3 file...${emojiId}`);
+      this.bot.sendMessage(chatId, `Thank you, please send your mp3 file...lol`);
       //for (let i=0;i<emojiId.length;i++) console.log(emojiId,emojiId[i]);
 
       // this.bot.sendVoice(chatId, voice.path)
@@ -487,20 +453,20 @@ class T {
  
     });
 
-    this.bot.onText(/^([^/][\w\d\s]+) (.+)\)$/, (msg, match) => {
-      const chatId = msg.chat.id;
-      console.log('chatId===>', chatId)
+    // this.bot.onText(/^([^/][a-zA-Zа-яА-Я0-9 /)]+)$/, (msg, match) => {
+    //   const chatId = msg.chat.id;
+    //   console.log('chatId===>', chatId)
       
-      if (!this.cbr.execute(chatId, [match[1], match[2]])) {
-        console.log('registered -->', match);
-      } else {
-        this.bot.sendMessage(chatId, 'wtf?');
-      }
+    //   if (!this.cbr.execute(chatId, [match[1]])) {
+    //     console.log('registered -->', match);
+    //   } else {
+    //     this.bot.sendMessage(chatId, 'wtf?');
+    //   }
 
       
-    });
+    // });
 
-    this.bot.onText(/^([^/].+)\)\)$/, (msg, match) => {
+    this.bot.onText(/^([^/].+)$/, (msg, match) => { // ^([^/][a-zA-Zа-яА-Я0-9 /)]+)$
       const chatId = msg.chat.id;
       console.log('chatId===>', chatId)
       
@@ -608,7 +574,7 @@ class T {
       for (var i=page*5; i<page*5+5 && i<voices.length;i++) {
         var voice = voices[i];
         buttons.push([{
-          text: voice.name + ' ' + voice.emojiCode,
+          text: voice.name,
           callback_data: JSON.stringify({index: 'song', fileId: voice.fileId})
         }])
       }
@@ -727,7 +693,7 @@ class T {
               addDelFavButton
             ]
   
-            var text = `Voice: ${voice.name},\nemoji: ${voice.emojiCode},\nYour actions:`;
+            var text = `Voice: ${voice.name},\nYour actions:`;
             var options = {
               reply_markup: JSON.stringify({
                 inline_keyboard: buttons,
@@ -810,12 +776,6 @@ class T {
         this.cbr.subscribe(chatId,'editName',{fileId})
 
         var text = `Please send the new name followed by two brackets: new name))`;
-        sendMessageOrEdit(chatId, text, {}, toEdit)
-
-      } else if (index == 'editEmoji') {
-        this.cbr.subscribe(chatId,'editEmoji',{fileId})
-
-        var text = `Please send the new emoji followed by two brackets: 😛))`;
         sendMessageOrEdit(chatId, text, {}, toEdit)
 
       } else if (index == 'delete') { // deal to delete from all favs and packs, or make all access functions troubleshoot on empty voice/ or delete the possibility to remove audio/ but it is shit
@@ -914,7 +874,7 @@ class T {
                 console.log('lol1=>', voice)
                 this.cbr.subscribe(chatId, 'registerIncomingAudio', {voice})
                 console.log('lol2=>')
-                this.bot.sendVoice(chatId, voice.fileId, {caption: 'Please supply name and emoji followed by one bracket: My new voice name 🤓)'})
+                this.bot.sendVoice(chatId, voice.fileId, {caption: 'Please supply the name followed by one bracket: My new voice name 🤓)'})
                 console.log('lol3=>')
                 // console.log('insert done--')
                 // this.usersDb.find({chatId}, (err, res) => {
@@ -982,7 +942,7 @@ class T {
           // add to favorites
         } else {
           this.cbr.subscribe(chatId,'registerIncomingVoice', {voiceMsg})
-          this.bot.sendMessage(chatId, 'Voice received, please supply name and emoji followed by one bracket: My new voice name 🤓)');
+          this.bot.sendMessage(chatId, 'Voice received, please supply the name followed by one bracket: My new voice name 🤓)');
           //this.bot.sendMessage(voice.from.id, 'Voice not exist');          
         }
       })
@@ -1019,7 +979,7 @@ class T {
                 id: i.toString(),
                 voice_file_id: voice.fileId,
                 // caption: voice.emojiCode,
-                title: voice.name + voice.emojiCode
+                title: voice.name
               })
               // if (i==voices.length-1) {
               //   console.log(`results => ${i},${voices.length-1},${results}`)
@@ -1079,7 +1039,7 @@ class T {
                     id: i.toString(),
                     voice_file_id: voice.fileId,
                     // caption: voice.emojiCode,
-                    title: voice.name + voice.emojiCode
+                    title: voice.name
                   })
                   // if (i==voices.length-1) {
                   //   console.log(`results => ${i},${voices.length-1},${results}`)
@@ -1131,7 +1091,7 @@ class T {
               type:'voice',
                     id: i++,
                     voice_file_id: this.voiceDb[key].fileId,
-                    title: this.voiceDb[key].name + ' ' + this.voiceDb[key].emojiCode
+                    title: this.voiceDb[key].name
             }));
             if (results.length>0){
               this.bot.answerInlineQuery(queryId,results)
