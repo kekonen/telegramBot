@@ -676,7 +676,7 @@ class T {
         this.VoicesDb.findOne({where:{fileId}}).then(voice => {
           if (!voice) throw new Error('No voice found');
           this.usersDb.findOne({where: {chatId}}).then(user => {
-            if (user.fav) {
+            if (user && user.fav) {
               console.log('user fav ==>,',user.fav)
               var favs = JSON.parse(user.fav);
               if (favs.includes(voice.fileId)) {
@@ -704,7 +704,7 @@ class T {
               sendMessageOrEdit(chatId, text, options) //, toEdit
             } else {
               var buttons = lowerMenu(chatId);
-              var text = `No voices in fav`
+              var text = `No voices in fav or user haven't uploaded yet`
               var options = {
                 reply_markup: JSON.stringify({
                   inline_keyboard: buttons,
