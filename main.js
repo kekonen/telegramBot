@@ -676,31 +676,44 @@ class T {
         this.VoicesDb.findOne({where:{fileId}}).then(voice => {
           if (!voice) throw new Error('No voice found');
           this.usersDb.findOne({where: {chatId}}).then(user => {
-            console.log('user fav ==>,',user.fav)
-            var favs = JSON.parse(user.fav);
-            if (favs.includes(voice.fileId)) {
-              var addDelFavButton = [{text: 'Delete from fav', callback_data: JSON.stringify({index: 'deleteFav', fileId: voice.fileId})}]
-            } else {
-              var addDelFavButton = [{text: 'Add to fav', callback_data: JSON.stringify({index: 'addFav', fileId: voice.fileId})}]
-            }
+            if (user.fav) {
+              console.log('user fav ==>,',user.fav)
+              var favs = JSON.parse(user.fav);
+              if (favs.includes(voice.fileId)) {
+                var addDelFavButton = [{text: 'Delete from fav', callback_data: JSON.stringify({index: 'deleteFav', fileId: voice.fileId})}]
+              } else {
+                var addDelFavButton = [{text: 'Add to fav', callback_data: JSON.stringify({index: 'addFav', fileId: voice.fileId})}]
+              }
 
-            var ownerButtons = [
-              [{text: 'Edit name', callback_data: JSON.stringify({index: 'editName', fileId: voice.fileId}) }],
-              [{text: 'Delete Voice', callback_data: JSON.stringify({index: 'delete', fileId: voice.fileId})}]
-            ]
-            var buttons = [
-              ...(voice.chatId == chatId?ownerButtons:[]),
-              addDelFavButton
-            ]
-  
-            var text = `Voice: ${voice.name},\nYour actions:`;
-            var options = {
-              reply_markup: JSON.stringify({
-                inline_keyboard: buttons,
-                parse_mode: 'Markdown'
-              })
-            };
-            sendMessageOrEdit(chatId, text, options) //, toEdit
+              var ownerButtons = [
+                [{text: 'Edit name', callback_data: JSON.stringify({index: 'editName', fileId: voice.fileId}) }],
+                [{text: 'Delete Voice', callback_data: JSON.stringify({index: 'delete', fileId: voice.fileId})}]
+              ]
+              var buttons = [
+                ...(voice.chatId == chatId?ownerButtons:[]),
+                addDelFavButton
+              ]
+    
+              var text = `Voice: ${voice.name},\nYour actions:`;
+              var options = {
+                reply_markup: JSON.stringify({
+                  inline_keyboard: buttons,
+                  parse_mode: 'Markdown'
+                })
+              };
+              sendMessageOrEdit(chatId, text, options) //, toEdit
+            } else {
+              var buttons = lowerMenu(chatId);
+              var text = `No voices in fav`
+              var options = {
+                reply_markup: JSON.stringify({
+                  inline_keyboard: buttons,
+                  parse_mode: 'Markdown'
+                })
+              };
+              sendMessageOrEdit(chatId, text, options) //, toEdit
+            }
+            
 
           })
 
