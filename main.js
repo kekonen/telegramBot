@@ -676,14 +676,18 @@ class T {
         this.VoicesDb.findOne({where:{fileId}}).then(voice => {
           if (!voice) throw new Error('No voice found');
           this.usersDb.findOne({where: {chatId}}).then(user => {
-            if (user && user.fav) {
-              console.log('user fav ==>,',user.fav)
+            if (user) {
+              //console.log('user fav ==>,',user.fav)
               var favs = JSON.parse(user.fav);
-              if (favs.includes(voice.fileId)) {
-                var addDelFavButton = [{text: 'Delete from fav', callback_data: JSON.stringify({index: 'deleteFav', fileId: voice.fileId})}]
-              } else {
-                var addDelFavButton = [{text: 'Add to fav', callback_data: JSON.stringify({index: 'addFav', fileId: voice.fileId})}]
+              var addDelFavButton =[];
+              if (favs) {
+                if (favs.includes(voice.fileId)) {
+                  addDelFavButton = [{text: 'Delete from fav', callback_data: JSON.stringify({index: 'deleteFav', fileId: voice.fileId})}]
+                } else {
+                  addDelFavButton = [{text: 'Add to fav', callback_data: JSON.stringify({index: 'addFav', fileId: voice.fileId})}]
+                }
               }
+              
 
               var ownerButtons = [
                 [{text: 'Edit name', callback_data: JSON.stringify({index: 'editName', fileId: voice.fileId}) }],
@@ -691,7 +695,7 @@ class T {
               ]
               var buttons = [
                 ...(voice.chatId == chatId?ownerButtons:[]),
-                addDelFavButton
+                ...addDelFavButton?[addDelFavButton]:[]
               ]
     
               var text = `Voice: ${voice.name},\nYour actions:`;
