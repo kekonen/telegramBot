@@ -1,0 +1,11 @@
+# All next files/directories will be excluded
+.idea
+db.config.json
+node_modules
+npm-debug.log
+.git
+
+# Logs
+logs
+*.log
+npm-debug.log*

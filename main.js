@@ -12,6 +12,10 @@ var ffmpeg = require('fluent-ffmpeg');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
+console.log('ARGS ==> ', process.argv)
+
+var dbIp = process.argv[2] || 'localhost';
+var dbPort = process.argv[3] || '3306';
 // const sequelize = new Sequelize('Voices', null, null, {
 //   dialect: "sqlite",
 //   storage: './Voices.sqlite',
@@ -23,7 +27,7 @@ var charsets = {
 };
 
 var env = 'prod';
-const sequelize = new Sequelize('mysql://root:root@localhost/kek');
+const sequelize = new Sequelize(`mysql://root:root@${dbIp}:${dbPort}/kek`);
 
 // const sequelize = new Sequelize('kek', 'root', 'root', {
 //   host: 'localhost',

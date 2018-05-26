@@ -18,7 +18,8 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node main.js"
+    "start": "node main.js 172.18.0.1 && node serviceBot.js",
+    "dev": "nodemon main.js 172.18.0.1"
   },
   "repository": {
     "type": "git",

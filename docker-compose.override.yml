@@ -1,0 +1,6 @@
+version: '3'
+services:
+  main:
+    volumes:
+      - .:/home/node/telegramBot/
+    command: ["./wait_for_it.sh", "mysql:3306", "--", "npm", "run", "dev"]
