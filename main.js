@@ -61,7 +61,8 @@ var Voices = sequelize.define('voices', {
 var Users = sequelize.define('users', {
   firstName: Sequelize.STRING,
   secondName: Sequelize.STRING,
-  fav: Sequelize.STRING(685),
+  fav: Sequelize.JSON,
+  packs: Sequelize.JSON,
   chatId: Sequelize.STRING,
   id: {
     type: Sequelize.INTEGER,
@@ -82,6 +83,11 @@ var Collections = sequelize.define('collections', {
     allowNull: false,
     autoIncrement: true
   },
+});
+
+var Packs = sequelize.define('packs', {
+  name: Sequelize.STRING,
+  fileId: Sequelize.STRING
 });
 
 sequelize.sync({ force: false }).then(function(err) {
@@ -120,6 +126,10 @@ Voices.sync({force: false}).then(() => {
 //     const token = contents;
 // });
 
+function onlyUnique(value, index, self) { 
+  return self.indexOf(value) === index;
+}
+
 function ifcb(query, cb){
   if(query) {console.log('match > ', query);return cb(query)}
   return 0
@@ -139,7 +149,21 @@ class T {
     //this.emojiDb = Object.assign({}, ...JSON.parse(fs.readFileSync('emojiDbEmpty.json', 'utf8')).map(emoji => {var plh={};plh[emoji]=[];return plh}));
 
     this.VoicesDb = Voices;
+    this.PacksDb = Packs;
+    //LOL
     this.voiceDb = {};
+    this.VoicesDb.find({where:{}})
+    .then(voices => {
+      if (voices){
+        voices.forEach(voice => {
+          this.voiceDb[voice.name] = voice;
+        })
+      }
+     
+    });
+    
+
+    
 
     this.usersDb = Users;
     console.log('this.usersDb',this.usersDb)
@@ -291,6 +315,19 @@ class T {
       
     })
 
+    this.cbr.registerFunction('registerPack', async(chatId, context, {voice}) => {
+      try {
+        var {packName} = context;
+        console.log('plz fileId ->',voice)
+        // this.cbr.subscribe(chatId, 'registerPack', {packName})
+        return this.PacksDb.create({name:packName, fileId:voice.file_id}).then(lol=> [context, 0])
+      }catch(e){
+        console.log('eerororor!->',e)
+      }
+      
+      
+    })
+
 
     
     //console.log(this.emojiDb);
@@ -331,8 +368,8 @@ class T {
   }
 
   createUser(msg){
-    var [firstName, secondName, fav, chatId] = [msg.from.first_name, msg.from.second_name, JSON.stringify([]), msg.from.id]
-    return this.usersDb.create({ firstName, secondName, fav, chatId })
+    var [firstName, secondName, fav, chatId, packs] = [msg.from.first_name, msg.from.second_name, [], msg.from.id, []]
+    return this.usersDb.create({ firstName, secondName, fav, chatId ,packs})
      
   }
 
@@ -391,7 +428,44 @@ class T {
   }
 
   register(){
+    this.bot.onText(/^\/start$/, async (msg, match) =>{
+      const chatId = msg.chat.id;
 
+      this.createUser(msg);
+      this.bot.sendMessage(chatId, 'Привет!\n\nЯ - VoiceKekBot, теперь в твоем распоряжении доступ к большому архиву топовых мемов, шуток и фраз твоих любимых персонажей. Отправляй своим друзьям и близким, они точно оценят.\n\nСтикеры и гифки - каменный век, элита Телеграма переходит на голосовые мемы. \n\n/help -  гайд по боту для молодых\n/manage - перейти в личный кабинет\n\nвот эта хуйня в разделе /help\n\nКак добавить звук?\n1. Отправь или перешли мне сообщение с прикрепленным mp3 файлом.\n2. Укажи название, по которому в последующем ты сможешь найти нужную тебе запись.\n3. Порадуй своих друзей новым мемом!\n\nКак пользоваться ботом?\n\nЧтобы отправить звук, напиши в строку сообщения @voicekekbot [Имя записи]. Иногда боту нужно немного времени, чтобы прогрузить записи, плз наберись терпения.\n\nКак пользоваться панелью управления? \n\nКоманда /manage открывает панель управления.\nСписок своих загруженных записей и паки ты можешь найти в разделе /manage -> my tracks.\n\nЗдесь же ты можешь удалять уже загруженные записи, для этого выбери нужную в разделе My Tracks и выбери "Удалить".\n...');
+    })
+    
+    this.bot.onText(/^\/start ([\w-]+)$/, async (msg, match) =>{
+      const chatId = msg.chat.id;
+      const message = Object.create(msg);
+      const command = match[1]
+  
+      if (command == 'showPacks') {
+        var buttons = await this.PacksDb.findAll({where:{}})
+        .then(entries => {
+          console.log('entries------------>',entries)
+          var packs = entries.map(e=>e.name).filter( onlyUnique );
+          console.log('packs',packs)
+          return packs.map(pack => [{text: pack, callback_data:  JSON.stringify({index: 'sendPack', pack}) }])
+        })
+
+        // var buttons=  [
+        //   [{ text: 'Fav', callback_data:  JSON.stringify({index: 'main', button: 'fav'}) }, { text: 'My songs', callback_data: JSON.stringify({index: 'main', button: 'mine'}) }],
+        //   [{ text: 'Paki', callback_data:  JSON.stringify({index: 'main', button: 'lol'})},     { text: 'Lox', callback_data: JSON.stringify({index: 'main', button: 'lol'}) }]
+        //   ]
+
+        var options = {
+          reply_markup: JSON.stringify({
+            inline_keyboard: buttons,
+            parse_mode: 'Markdown'
+          })
+        };
+        console.log(`sendMessage228`, buttons);
+        var text = 'Here are all the packs exist';
+        this.bot.sendMessage(chatId, text, options)
+      }
+    
+    });
 
     this.bot.onText(/\/echo (.+)/, (msg, match) => {
       // 'msg' is the received Message from Telegram
@@ -405,6 +479,22 @@ class T {
     
       // send back the matched "whatever" to the chat
       this.bot.sendMessage(chatId, chatId+' -> '+resp);
+    });
+
+    this.bot.onText(/\/create_pack (.+)/, (msg, match) => {
+      // 'msg' is the received Message from Telegram
+      // 'match' is the result of executing the regexp above on the text content
+      // of the message
+    
+      const chatId = msg.chat.id;
+      const packName = match[1]; // the captured "whatever"
+
+      this.cbr.subscribe(chatId, 'registerPack', {packName})
+    
+      console.log(`message: ${packName}}`);
+    
+      // send back the matched "whatever" to the chat
+      this.bot.sendMessage(chatId, chatId+' -> '+packName);
     });
 
     this.bot.onText(/\/sendOgg (.+)\)/, (msg, match) => {
@@ -619,7 +709,7 @@ class T {
       }
     }
 
-    this.bot.on('callback_query', (msg) =>  {
+    this.bot.on('callback_query', async (msg) =>  {
       const inline_message_id = msg.id
       const chatId = msg.from.id;
       var data = msg.data;
@@ -628,7 +718,7 @@ class T {
       // var index = answer[0];
       // var button = answer[1];
       // var page = answer[2] || 0;
-      var { index, button, page, fileId, toEdit } = answer;
+      var { index, button, page, fileId, toEdit, pack } = answer;
       if (!page) page = 0;
       if (!toEdit) toEdit = msg.message.message_id;
       console.log(`callback_query: data:${data}, index:${index}, button:${button}, page:${page}, `, msg);
@@ -690,6 +780,55 @@ class T {
             
 
         }
+      }else if (index == 'sendPack'){
+        sendMessageOrEdit(chatId, 'Pack ' + pack)
+        if (button == 'allPacks') {
+          var buttons = this.PacksDb.findAll({where:{}})
+          .then(packs => {
+            return packs.map(pack => [{text: pack.name, callback_data:  JSON.stringify({index: 'sendPack', pack: pack.name}) }])
+          })
+
+          var options = {
+            reply_markup: JSON.stringify({
+              inline_keyboard: buttons,
+              parse_mode: 'Markdown'
+            })
+          };
+          console.log(`sendMessage1337`,buttons);
+          var text = 'Here are all the packs exist';
+          this.bot.sendMessage(chatId, text, options)
+
+        }
+        const voices = await this.PacksDb.findAll({where:{name:pack}})
+        .then(voiceIds => {
+          this.VoicesDb.findAll({where:{fileId : {$in:voiceIds.map(voiceId=>voiceId.fileId)}}})
+          .then(voices => {
+            voices.forEach(voice => {
+
+              this.bot.sendVoice(chatId, voice.fileId, {caption: voice.name})
+    
+            })
+
+          
+
+          })
+          
+        })
+
+        //DONT KNOW HOW IT WORKS< BUT ITS COOL
+        var buttons = [[{text:'send this pack', switch_inline_query: pack}],[{text:'show other packs', callback_data: JSON.stringify({index: 'sendPack', button: 'allPacks'}) }]]
+
+            
+        var options = {
+          reply_markup: JSON.stringify({
+            inline_keyboard: buttons,
+            parse_mode: 'Markdown'
+          })
+        };
+        this.bot.sendMessage(chatId, '-> lol', options)
+        //DONT KNOW HOW IT WORKS< BUT ITS COOL
+        
+
         
       }else if (index == 'song') {
         if (!fileId) throw new Error('Activated voice with no id, not good');
@@ -748,12 +887,12 @@ class T {
         this.usersDb.findOne({where:{chatId}})
           .then(user => {
             if (user && fileId){
-              var fav = JSON.parse(user.fav);
+              var fav = user.fav;
               if (fav) {
                 var ind = fav.indexOf(fileId);
                 if (ind != -1) {
                   fav = [...fav.slice(0,ind), ...fav.slice(ind+1)]
-                  user.update({fav:JSON.stringify(fav)});
+                  user.update({fav});
                   console.log('1',fav)
 
                   var buttons = [];
@@ -784,12 +923,12 @@ class T {
         this.usersDb.findOne({where:{chatId}})
           .then(user => {
             if (user && fileId){
-              var fav = JSON.parse(user.fav);
+              var fav = user.fav;
               if (fav) {
                 var ind = fav.indexOf(fileId);
                 if (ind == -1) {
                   fav.push(fileId)
-                  user.update({fav:JSON.stringify(fav)});
+                  user.update({fav:fav});
 
                   var buttons = lowerMenuEnhanced([], chatId);
 
@@ -949,40 +1088,46 @@ class T {
       var chatId = voiceMsg.from.id
       var fileId = voiceMsg.voice.file_id
 
-      this.VoicesDb.findOne({where: {fileId}}).then(voice => {
-        if (voice && fileId) {
-          this.bot.sendMessage(chatId, 'Voice Exists now in your /fav');
-          this.usersDb.findOne({where:{chatId}}).then(user => {
-            if (user) {
-              console.log('update start--')
-              var userFavs = JSON.parse(user.fav)
-              console.log('userFavs', userFavs,fileId)
-              if (!userFavs.includes(fileId)){
-                userFavs.push(fileId)
-                console.log('userFavs start--',userFavs)
-                user.update({fav:JSON.stringify(userFavs)});
-                console.log('update done--')
-              } else {
-                console.log('/fav already exists',userFavs)
-              }
-              
-            } else {
-              console.log('insert start--')
-              this.usersDb.create({chatId, fav: JSON.stringify([fileId])});
-              console.log('insert done--')
+      
+        this.VoicesDb.findOne({where: {fileId}}).then(voice => {
+          if (voice && fileId) {
+            if (!this.cbr.execute(voiceMsg.chat.id, voiceMsg)){
+              this.bot.sendMessage(chatId, 'Voice Exists now in your /fav');
+              this.usersDb.findOne({where:{chatId}}).then(user => {
+                if (user) {
+                  console.log('update start--')
+                  var userFavs = user.fav;
+                  console.log('userFavs', userFavs,fileId)
+                  if (!userFavs.includes(fileId)){
+                    userFavs.push(fileId)
+                    console.log('userFavs start--',userFavs)
+                    user.update({fav:userFavs});
+                    console.log('update done--')
+                  } else {
+                    console.log('/fav already exists',userFavs)
+                  }
+                  
+                } else {
+                  console.log('insert start--')
+                  this.usersDb.create({chatId, fav: [fileId]});
+                  console.log('insert done--')
+                }
+              })
             }
-          })
-          // , (err, [res]) => {
             
-          // })
-          
-          // add to favorites
-        } else {
-          this.cbr.subscribe(chatId,'registerIncomingVoice', {voiceMsg})
-          this.bot.sendMessage(chatId, 'Voice received, please supply the name followed by one bracket: My new voice name 🤓)');
-          //this.bot.sendMessage(voice.from.id, 'Voice not exist');          
-        }
-      })
+            // , (err, [res]) => {
+              
+            // })
+            
+            // add to favorites
+          } else {
+            this.cbr.subscribe(chatId,'registerIncomingVoice', {voiceMsg})
+            this.bot.sendMessage(chatId, 'Voice received, please supply the name followed by one bracket: My new voice name 🤓)');
+            //this.bot.sendMessage(voice.from.id, 'Voice not exist');          
+          }
+        })
+
+      
       // , (err, [voice]) => {
         
       // })
@@ -1065,7 +1210,7 @@ class T {
           this.usersDb.findOne({where:{chatId}})
           .then(user => {
             if (user){
-              var fav = JSON.parse(user.fav);
+              var fav = user.fav;
               this.VoicesDb.findAll({where: {
                 fileId: fav
               }}).then(voices => {
@@ -1092,44 +1237,68 @@ class T {
             }
           })
 
-          // , (err, [{fav}]) => {
-          //   console.log('fav--->', fav)
-          //   fav.forEach( (voiceFileId, i) => {
-          //     this.VoicesDb.find({fileId: voiceFileId}, (err, [voice]) => {
-          //       console.log('Adding audio-->',voice)
-          //       if (voice) {
-          //         results.push({
-          //           type: 'voice',
-          //           id: i.toString(),
-          //           voice_file_id: voice.fileId,
-          //           // caption: voice.emojiCode,
-          //           title: voice.name + voice.emojiCode
-          //         })
-          //         if (i==fav.length-1) {
-          //           console.log(`results => ${i},${fav.length-1},${results}`,results)
-          //           this.bot.answerInlineQuery(queryId, results)
-          //         }
-          //       }
-          //     })
-          //   })
-            
-          // })
+ 
         }):
           break;
-        case !!ifcb(queryText.toLowerCase().match(/([\wа-яА-Я, ]+)$/), (res) => {
+        case !!ifcb(queryText.toLowerCase().match(/([\wа-яА-Я, ]+)$/), async (res) => {
           var match = res[1];
           try{
             console.log('queryText: ', res)
             console.log('matched', res[1])
             // var voice = this.voiceDb[res[1]]; // if want to receive more -> make request
             var matcher = new RegExp(match, 'i');
-            let i = 0;
-            var results = Object.keys(this.voiceDb).filter(key => matcher.test(key)).map(key => ({
-              type:'voice',
-                    id: i++,
-                    voice_file_id: this.voiceDb[key].fileId,
-                    title: this.voiceDb[key].name
-            }));
+            var user = await this.usersDb.findOne({where:{chatId}});
+            console.log('user', user);
+            // var results =[];
+
+            var results = await this.PacksDb.findAll({where: {name: match}})
+            .then(async (pack) => {
+              if (pack) {
+                var voices = pack.map(entry => entry.fileId)
+                var Voices = await this.VoicesDb.findAll({where: {fileId: {$in: voices}}})
+                let i = 0;
+                return Voices.map(voice => ({
+                  type:'voice',
+                        id: i++,
+                        voice_file_id: voice.fileId,
+                        title: voice.name
+                }));
+              } else{
+                return []
+              }
+            })
+            console.log('Voices-->', results)
+            if (results.length<=0) {
+              var userFavsAndUser_s = await this.VoicesDb.findAll({where: {$or:{chatId, fileId: {$in: user.fav}}}});
+              console.log('userFavsAndUser_s',userFavsAndUser_s, user.packs,user.fav);
+
+              var userPackVoices = await this.PacksDb.findAll({where: {name: {$in: user.packs}}})
+              .then(async (packVoices) => {
+                var voices = packVoices.map(entry => entry.fileId)
+                return await this.VoicesDb.findAll({where: {fileId: {$in: voices}}})
+              })
+
+              var Voices = userFavsAndUser_s.filter(function(obj) { return userPackVoices.indexOf(obj) == -1; });
+              let i = 0;
+              results = Voices.filter(voice => matcher.test(voice.name)).map(voice => ({
+                type:'voice',
+                      id: i++,
+                      voice_file_id: voice.fileId,
+                      title: voice.name
+              }));
+            }
+            
+            
+
+            
+
+            
+            // let i = 0;
+            // var neededVoices = Voices.filter(voice => matcher.test(voice.name))
+
+
+
+            
             if (results.length>0){
               this.bot.answerInlineQuery(queryId,results)
             } else {
@@ -1139,47 +1308,22 @@ class T {
             console.log('eeeeeeeee>', e)
             console.log('------', this.voiceDb)
           }
-          
-          
+  
+        }):
+          break;
+        case !!ifcb(queryText.toLowerCase().match(/^$/), (res) => {
+          console.log('queryId', queryId)
+          // var results = //////////LOLOLO
+          this.bot.answerInlineQuery(queryId,results,{switch_pm_text: 'Какие паки есть?', switch_pm_parameter: 'showPacks'})
 
-          // this.VoicesDb.find({name: {
-          //     "$regex": new RegExp(match, 'i'),
-          // }}, (err, voices) => {
-          //   if (!err) {
-          //     if (voices.length){
-          //       console.log('search results => ', voices)
-          //       let i = 0;
-          //       var results = voices.map(voice => ({
-          //         type:'voice',
-          //               id: i++,
-          //               voice_file_id: voice.fileId,
-          //               title: voice.name + ' ' + voice.emojiCode
-          //       }))
-          //       this.bot.answerInlineQuery(queryId,results)
-          //     } else {
-          //       console.log(`lol -> [${match}], ${voices}`,voices)
-          //     }
-          //   } else {
-          //     console.log('error->', err)
-          //     return err
-          //   }
-            
-            
-  
-            
+          // this.PacksDb.findAll({})
+          // .then(packs => {
+          //   packs.forEach(pack => {
+              
+          //   })
+          //   if (results.length>0){
+              
           // })
-          //searchString = searchString.split(' ').join('|');
-          //var regex = new RegExp(searchString, `i`);
-  
-          // if (voice){
-          //   console.log('voice:==>',voice)
-          //   var v = voice.getVoiceForSend();
-          //   console.log('v--->', v)
-          //   results.push(v)
-          //   console.log('Inline results: ', results)
-      
-          //   this.bot.answerInlineQuery(queryId,results)
-          // } 
         }):
           break;
         default: 
